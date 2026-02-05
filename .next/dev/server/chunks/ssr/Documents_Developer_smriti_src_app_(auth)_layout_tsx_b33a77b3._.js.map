@@ -1,0 +1,6 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 4, "column": 0}, "map": {"version":3,"sources":["file:///Users/shreyas/Documents/Developer/smriti/src/app/%28auth%29/layout.tsx"],"sourcesContent":["export default function AuthLayout({\n  children,\n}: {\n  children: React.ReactNode;\n}) {\n  return (\n    <main className=\"min-h-screen bg-neutral-50 p-6\">\n      <div className=\"mx-auto max-w-md\">{children}</div>\n    </main>\n  );\n}\n"],"names":[],"mappings":";;;;;;AAAe,SAAS,WAAW,EACjC,QAAQ,EAGT;IACC,qBACE,kRAAC;QAAK,WAAU;kBACd,cAAA,kRAAC;YAAI,WAAU;sBAAoB;;;;;;;;;;;AAGzC"}}]
+}

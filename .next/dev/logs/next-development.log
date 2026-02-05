@@ -1,3 +1,6 @@
-[00:00:00.970] Server  LOG     ✓ Ready in 707ms
-[00:00:06.595] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
-[00:00:06.767] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:00:01.066] Server  LOG     ✓ Ready in 841ms
+[00:00:03.119] Server  ERROR   ⨯ TypeError: Cannot read properties of undefined (reading 'getUser')
+[00:00:03.332] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:00:04.155] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:00:04.293] Browser ERROR   uncaughtError: TypeError: Cannot read properties of undefined (reading 'getUser')
+[00:00:57.896] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
