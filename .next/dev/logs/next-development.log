@@ -1,6 +1,5 @@
-[00:00:01.066] Server  LOG     ✓ Ready in 841ms
-[00:00:03.119] Server  ERROR   ⨯ TypeError: Cannot read properties of undefined (reading 'getUser')
-[00:00:03.332] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
-[00:00:04.155] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
-[00:00:04.293] Browser ERROR   uncaughtError: TypeError: Cannot read properties of undefined (reading 'getUser')
-[00:00:57.896] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:00:01.028] Server  LOG     ✓ Ready in 797ms
+[00:00:06.731] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:00:06.862] Browser WARN    Image with src "/landing/photo-1.png" has "fill" but is missing "sizes" prop. Please add it to improve page performance. Read more: https://nextjs.org/docs/api-reference/next/image#sizes
+[00:00:06.862] Browser WARN    Image with src "/landing/photo-2.png" has "fill" but is missing "sizes" prop. Please add it to improve page performance. Read more: https://nextjs.org/docs/api-reference/next/image#sizes
+[00:00:06.862] Browser WARN    Image with src "/landing/stamp.png" has "fill" but is missing "sizes" prop. Please add it to improve page performance. Read more: https://nextjs.org/docs/api-reference/next/image#sizes
