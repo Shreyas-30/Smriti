@@ -123,3 +123,63 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* ── Crinkled paper texture (applied to hero + sections) ── */
+.paper-texture {
+  position: relative;
+}
+.paper-texture::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 3px,
+      rgba(160, 130, 90, 0.012) 3px,
+      rgba(160, 130, 90, 0.012) 4px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 5px,
+      rgba(140, 110, 70, 0.008) 5px,
+      rgba(140, 110, 70, 0.008) 6px
+    ),
+    radial-gradient(ellipse at 20% 50%, rgba(120, 90, 50, 0.06) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 20%, rgba(140, 100, 50, 0.04) 0%, transparent 40%),
+    radial-gradient(ellipse at 50% 80%, rgba(100, 80, 40, 0.05) 0%, transparent 45%),
+    radial-gradient(ellipse at 70% 60%, rgba(130, 100, 60, 0.03) 0%, transparent 30%);
+  z-index: 0;
+}
+
+/* ── Landing page photo collage ── */
+.photo-card {
+  transform: var(--base-transform, rotate(0deg));
+  box-shadow:
+    0 5px 20px rgba(0, 0, 0, 0.22),
+    0 1px 4px rgba(0, 0, 0, 0.10);
+  transition:
+    transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 0.3s ease;
+}
+
+.photo-card:hover {
+  transform: var(--base-transform, rotate(0deg)) translate(6px, -8px);
+  box-shadow:
+    0 16px 44px rgba(0, 0, 0, 0.30),
+    0 3px 8px rgba(0, 0, 0, 0.14);
+}
+
+/* Grain overlay on photos */
+.photo-grain {
+  opacity: 0.45;
+  transition: opacity 0.4s ease;
+}
+
+/* When hovering over a cluster, remove grain from all photos in it */
+.photo-cluster:hover .photo-grain {
+  opacity: 0;
+}
