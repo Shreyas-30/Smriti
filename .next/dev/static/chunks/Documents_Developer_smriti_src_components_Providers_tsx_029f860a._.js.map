@@ -1,6 +1,0 @@
-{
-  "version": 3,
-  "sources": [],
-  "sections": [
-    {"offset": {"line": 4, "column": 0}, "map": {"version":3,"sources":["file:///Users/shreyas/Documents/Developer/smriti/src/components/Providers.tsx"],"sourcesContent":["\"use client\";\n\nimport { QueryClient, QueryClientProvider } from \"@tanstack/react-query\";\nimport { Toaster } from \"react-hot-toast\";\nimport React from \"react\";\n\nexport function Providers({ children }: { children: React.ReactNode }) {\n  const [queryClient] = React.useState(() => new QueryClient());\n\n  return (\n    <QueryClientProvider client={queryClient}>\n      {children}\n      <Toaster position=\"top-right\" />\n    </QueryClientProvider>\n  );\n}\n"],"names":[],"mappings":";;;;;AAEA;AAAA;AACA;AACA;;;AAJA;;;;AAMO,SAAS,UAAU,EAAE,QAAQ,EAAiC;;IACnE,MAAM,CAAC,YAAY,GAAG,4MAAK,CAAC,QAAQ;8BAAC,IAAM,IAAI,mOAAW;;IAE1D,qBACE,iOAAC,oPAAmB;QAAC,QAAQ;;YAC1B;0BACD,iOAAC,yMAAO;gBAAC,UAAS;;;;;;;;;;;;AAGxB;GATgB;KAAA"}}]
-}
