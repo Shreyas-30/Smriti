@@ -13,11 +13,9 @@ const schema = z
     firstName: z.string().min(1, "Required"),
     lastName: z.string().min(1, "Required"),
     email: z.string().email("Enter a valid email"),
+    phone: z.string().min(7, "Enter a valid phone number"),
     password: z.string().min(8, "At least 8 characters"),
     confirmPassword: z.string().min(1, "Required"),
-    storytellerFirstName: z.string().min(1, "Required"),
-    storytellerLastName: z.string().min(1, "Required"),
-    storytellerPhone: z.string().min(7, "Enter a valid phone number"),
   })
   .refine((d) => d.password === d.confirmPassword, {
     message: "Passwords don't match",
@@ -52,7 +50,7 @@ function Field({
   );
 }
 
-export default function SignupPage() {
+export default function SignupSelfPage() {
   const supabase = createSupabaseBrowserClient();
   const [loading, setLoading] = useState(false);
 
@@ -62,11 +60,9 @@ export default function SignupPage() {
       firstName: "",
       lastName: "",
       email: "",
+      phone: "",
       password: "",
       confirmPassword: "",
-      storytellerFirstName: "",
-      storytellerLastName: "",
-      storytellerPhone: "",
     },
   });
 
@@ -82,10 +78,8 @@ export default function SignupPage() {
           data: {
             first_name: values.firstName,
             last_name: values.lastName,
-            storyteller_first_name: values.storytellerFirstName,
-            storyteller_last_name: values.storytellerLastName,
-            storyteller_phone: values.storytellerPhone,
-            signup_type: "caregiver",
+            phone: values.phone,
+            signup_type: "self",
           },
           emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard`,
         },
@@ -113,7 +107,6 @@ export default function SignupPage() {
       </p>
 
       <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-6">
-        {/* Account fields */}
         <Field label="Your First Name" error={errors.firstName?.message}>
           <input
             {...form.register("firstName")}
@@ -139,6 +132,19 @@ export default function SignupPage() {
           />
         </Field>
 
+        <Field label="Your Phone Number" error={errors.phone?.message}>
+          <input
+            type="tel"
+            {...form.register("phone")}
+            placeholder="Your Phone Number"
+            className={inputCls}
+          />
+          <p className="mt-2 font-brand text-sm leading-snug text-[#561d11]/70">
+            We will use this number to send you notifications and Smriti prompts
+            for you to respond to.
+          </p>
+        </Field>
+
         <Field label="Account Password" error={errors.password?.message}>
           <input
             type="password"
@@ -157,52 +163,13 @@ export default function SignupPage() {
           />
         </Field>
 
-        {/* Storyteller fields */}
-        <Field
-          label="Storyteller's First Name"
-          error={errors.storytellerFirstName?.message}
-        >
-          <input
-            {...form.register("storytellerFirstName")}
-            placeholder="Storyteller's First Name"
-            className={inputCls}
-          />
-        </Field>
-
-        <Field
-          label="Storyteller's Last Name"
-          error={errors.storytellerLastName?.message}
-        >
-          <input
-            {...form.register("storytellerLastName")}
-            placeholder="Storyteller's Last Name"
-            className={inputCls}
-          />
-        </Field>
-
-        <Field
-          label="Storyteller's Phone Number"
-          error={errors.storytellerPhone?.message}
-        >
-          <input
-            type="tel"
-            {...form.register("storytellerPhone")}
-            placeholder="Storyteller's Phone Number"
-            className={inputCls}
-          />
-          <p className="mt-2 font-brand text-sm leading-snug text-[#561d11]/70">
-            We will use this number to send them notifications and Smriti
-            prompts for them to respond to.
-          </p>
-        </Field>
-
         {/* Submit */}
         <button
           type="submit"
           disabled={loading}
           className="mx-auto mt-2 flex h-12 w-72 items-center justify-center rounded-full bg-[#561d11] font-brand text-lg font-medium text-[#f0eade] transition hover:bg-[#6b2517] active:scale-[0.99] disabled:opacity-60"
         >
-          {loading ? "Setting up…" : "Set up weekly prompts"}
+          {loading ? "Setting up…" : "Set up my prompts"}
         </button>
       </form>
 

@@ -1,6 +1,19 @@
 import type { Metadata } from "next";
+import { Instrument_Serif, Instrument_Sans } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/Providers";
+
+const instrumentSerif = Instrument_Serif({
+  weight: "400",
+  subsets: ["latin"],
+  variable: "--font-instrument-serif",
+});
+
+const instrumentSans = Instrument_Sans({
+  weight: ["400", "500"],
+  subsets: ["latin"],
+  variable: "--font-instrument-sans",
+});
 
 export const metadata: Metadata = {
   title: "Smriti",
@@ -16,7 +29,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="en" className={`${instrumentSerif.variable} ${instrumentSans.variable}`}>
       <body>
         <Providers>{children}</Providers>
       </body>
