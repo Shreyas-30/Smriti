@@ -14,7 +14,7 @@ const NOISE_URL = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/
 // photo-13: 804x1072 (0.750) photo-14: 748x996 (0.751)  stamp: 232x278 (0.835)
 const CLUSTERS = {
   "top-left": [
-    { id: 1, src: "/landing/photo-1.png", pos: { left: "3%", top: "3%" }, w: "min(350px, 24.4vw)", ar: "948/664", rotate: -5, z: 3 },
+    { id: 1, src: "/landing/photo-1.png", pos: { left: "3%", top: "3%" }, w: "min(350px, 24.4vw)", ar: "948/664", rotate: -5, z: 0 },
     { id: 2, src: "/landing/photo-2.png", pos: { left: "16%", top: "18%" }, w: "min(231px, 16.1vw)", ar: "628/944", rotate: -2, z: 2 },
     { id: 3, src: "/landing/photo-3.png", pos: { left: "19%", top: "3%" }, w: "min(250px, 17.4vw)", ar: "636/804", rotate: 4, z: 1 },
   ],
@@ -30,10 +30,10 @@ const CLUSTERS = {
     { id: 10, src: "/landing/photo-10.png", pos: { right: "18%", top: "19%" }, w: "min(190px, 13.2vw)", ar: "640/900", rotate: -1, z: 4 },
   ],
   "bottom-right": [
-    { id: 11, src: "/landing/stamp.png", pos: { right: "21%", bottom: "14%" }, w: "min(90px, 6.3vw)", ar: "232/278", rotate: -5, z: 4 },
-    { id: 12, src: "/landing/photo-12.png", pos: { right: "12%", bottom: "2%" }, w: "min(263px, 18.3vw)", ar: "1072/800", rotate: -3, z: 1 },
-    { id: 13, src: "/landing/photo-13.png", pos: { right: "5%", bottom: "7%" }, w: "min(169px, 11.8vw)", ar: "804/1072", rotate: 3, z: 2 },
-    { id: 14, src: "/landing/photo-14.png", pos: { right: "1%", bottom: "0%" }, w: "min(138px, 9.5vw)", ar: "748/996", rotate: 6, z: 3 },
+    { id: 11, src: "/landing/stamp.png", pos: { right: "21%", bottom: "14%" }, w: "min(126px, 8.8vw)", ar: "232/278", rotate: -5, z: 4 },
+    { id: 12, src: "/landing/photo-12.png", pos: { right: "12%", bottom: "2%" }, w: "min(368px, 25.6vw)", ar: "1072/800", rotate: -3, z: 1 },
+    { id: 13, src: "/landing/photo-13.png", pos: { right: "5%", bottom: "7%" }, w: "min(237px, 16.5vw)", ar: "804/1072", rotate: 3, z: 2 },
+    { id: 14, src: "/landing/photo-14.png", pos: { right: "1%", bottom: "0%" }, w: "min(193px, 13.3vw)", ar: "748/996", rotate: 6, z: 3 },
   ],
 } as const;
 
