@@ -188,7 +188,7 @@ create index idx_subscriptions_user_id on public.subscriptions(user_id);
 -- creates the storyteller record — all from the signup metadata.
 -- =========
 create or replace function public.handle_new_user()
-returns trigger language plpgsql security definer set search_path = public as $$
+returns trigger language plpgsql security definer as $$
 declare
   v_signup_type text;
 begin

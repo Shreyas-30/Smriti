@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import SettingsButton from "./SettingsButton";
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -21,20 +22,6 @@ function schedulePrompts(prompts: { id: string; custom_text: string }[]) {
 }
 
 // ── Icons ────────────────────────────────────────────────────────────────────
-
-function GearIcon() {
-  return (
-    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-      <circle cx="10" cy="10" r="2.5" stroke="currentColor" strokeWidth="1.5" />
-      <path
-        d="M10 1.5V3.5M10 16.5V18.5M18.5 10H16.5M3.5 10H1.5M16.07 3.93l-1.42 1.42M5.35 14.65l-1.42 1.42M16.07 16.07l-1.42-1.42M5.35 5.35L3.93 3.93"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-      />
-    </svg>
-  );
-}
 
 function CalendarIcon({ className }: { className?: string }) {
   return (
@@ -87,12 +74,7 @@ export default async function DashboardPage() {
     <main className="min-h-dvh bg-[#f0eade]">
       {/* ── Header ── */}
       <div className="flex items-center justify-between px-6 pt-5 pb-3">
-        <button
-          aria-label="Settings"
-          className="w-11 h-11 rounded-full bg-[#561d11] flex items-center justify-center text-[#f0eade] transition hover:bg-[#6b2517]"
-        >
-          <GearIcon />
-        </button>
+        <SettingsButton />
 
         <h1 className="font-serif text-[#4c1815] text-[2.8rem] leading-none tracking-[-0.04em]">
           Smriti
