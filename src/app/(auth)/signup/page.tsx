@@ -9,7 +9,7 @@ import { useRouter } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import Link from "next/link";
 
-type Mode = "self" | "caregiver";
+type Mode = "self" | "curator";
 
 // All conditional fields are optional in the schema.
 // Mode-specific required validation is enforced in onSubmit.
@@ -89,7 +89,7 @@ function FadeSection({
 export default function SignupPage() {
   const supabase = createSupabaseBrowserClient();
   const router = useRouter();
-  const [mode, setMode] = useState<Mode>("caregiver");
+  const [mode, setMode] = useState<Mode>("curator"); // default: signing up as curator
   const [loading, setLoading] = useState(false);
 
   const form = useForm<FormValues>({
@@ -159,7 +159,7 @@ export default function SignupPage() {
               storyteller_first_name: values.storytellerFirstName,
               storyteller_last_name: values.storytellerLastName,
               storyteller_phone: values.storytellerPhone,
-              signup_type: "caregiver",
+              signup_type: "curator",
             };
 
       const { error } = await supabase.auth.signUp({
@@ -171,7 +171,7 @@ export default function SignupPage() {
         },
       });
       if (error) throw error;
-      router.push("/onboarding");
+      router.push(`/onboarding?mode=${mode}`);
     } catch (e: unknown) {
       toast.error((e as Error)?.message ?? "Signup failed");
     } finally {
@@ -200,9 +200,9 @@ export default function SignupPage() {
         </button>
         <button
           type="button"
-          onClick={() => handleModeChange("caregiver")}
+          onClick={() => handleModeChange("curator")}
           className={`flex-1 rounded-full py-2.5 font-brand text-sm font-medium transition-all duration-200 ${
-            mode === "caregiver"
+            mode === "curator"
               ? "bg-[#561d11] text-[#f0eade] shadow-sm"
               : "text-[#561d11]/55 hover:text-[#561d11]/80"
           }`}
@@ -276,8 +276,8 @@ export default function SignupPage() {
           />
         </Field>
 
-        {/* Caregiver-only: storyteller details */}
-        <FadeSection show={mode === "caregiver"}>
+        {/* Curator-only: storyteller details */}
+        <FadeSection show={mode === "curator"}>
           <Field
             label="Storyteller's First Name"
             error={errors.storytellerFirstName?.message}

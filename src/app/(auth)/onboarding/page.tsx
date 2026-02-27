@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useEffect, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import toast from "react-hot-toast";
 
@@ -21,14 +21,25 @@ const SUGGESTED_PROMPTS = [
 ];
 
 export default function OnboardingPage() {
+  return (
+    <Suspense>
+      <OnboardingContent />
+    </Suspense>
+  );
+}
+
+function OnboardingContent() {
   const supabase = createSupabaseBrowserClient();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const isCurator = searchParams.get("mode") === "curator";
 
   const [language, setLanguage] = useState("");
   const [langOpen, setLangOpen] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [customPrompt, setCustomPrompt] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Close language dropdown on outside click
@@ -99,7 +110,11 @@ export default function OnboardingPage() {
       }
 
       await saveToDb(user.id, language, prompts);
-      router.push("/dashboard");
+      if (isCurator) {
+        setShowSuccess(true);
+      } else {
+        router.push("/dashboard");
+      }
     } catch (e: unknown) {
       toast.error((e as Error)?.message ?? "Something went wrong.");
     } finally {
@@ -116,23 +131,91 @@ export default function OnboardingPage() {
 
   return (
     <>
+      {/* ── Success modal (caregiver only) ── */}
+      {showSuccess && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 px-4 pb-8">
+          <div className="w-full max-w-sm rounded-[32px] bg-[#f0eade] px-6 py-8 flex flex-col items-center gap-5">
+            {/* Icon circle */}
+            <div className="w-20 h-20 rounded-full bg-[#561d11] flex items-center justify-center">
+              <svg width="36" height="36" viewBox="0 0 24 24" fill="none">
+                <path
+                  d="M22 2L11 13"
+                  stroke="#f0eade"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                <path
+                  d="M22 2L15 22L11 13L2 9L22 2Z"
+                  stroke="#f0eade"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </div>
+
+            <div className="text-center">
+              <p className="font-serif text-[1.75rem] leading-tight tracking-[-0.03em] text-[#4c1815]">
+                Your first prompt is on its way!
+              </p>
+              <p className="mt-1 font-brand text-sm text-[#561d11]/60">
+                Sent via WhatsApp
+              </p>
+            </div>
+
+            {/* Info box */}
+            <div className="w-full rounded-[20px] bg-[#561d11]/8 border border-[#561d11]/15 px-5 py-4 flex flex-col gap-3">
+              <div className="flex items-start gap-3">
+                <span className="mt-0.5 shrink-0 w-5 h-5 rounded-full bg-[#561d11]/15 flex items-center justify-center text-[#561d11] text-xs font-bold">
+                  1
+                </span>
+                <p className="font-brand text-sm text-[#561d11] leading-snug">
+                  Next prompts will be sent once a week over WhatsApp
+                </p>
+              </div>
+              <div className="flex items-start gap-3">
+                <span className="mt-0.5 shrink-0 w-5 h-5 rounded-full bg-[#561d11]/15 flex items-center justify-center text-[#561d11] text-xs font-bold">
+                  2
+                </span>
+                <p className="font-brand text-sm text-[#561d11] leading-snug">
+                  You&apos;ll be notified when they record a story
+                </p>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => router.push("/dashboard")}
+              className="w-full h-12 rounded-full bg-[#561d11] font-brand text-base font-medium text-[#f0eade] transition hover:bg-[#6b2517] active:scale-[0.99]"
+            >
+              Continue to dashboard
+            </button>
+          </div>
+        </div>
+      )}
+
       <h1 className="mb-6 text-center font-serif text-[3rem] leading-none tracking-[-0.04em] text-[#4c1815]">
         Smriti
       </h1>
 
       <p className="mb-8 font-brand font-bold text-2xl leading-tight tracking-tight text-[#561d11]">
-        Choose your prompts. We&apos;ll send them to you once a week over
-        WhatsApp to collect your response.
+        {isCurator
+          ? "Choose your prompts. We\u2019ll send them to your storyteller once a week over WhatsApp to collect their response."
+          : "Choose your prompts. We\u2019ll send them to you once a week over WhatsApp to collect your response."}
       </p>
 
       {/* ── Language ── */}
       <div className="mb-8">
         <p className="mb-1.5 font-brand font-bold text-base text-[#561d11]">
-          Which language will you respond in?
+          {isCurator
+            ? "Which language will they respond in?"
+            : "Which language will you respond in?"}
         </p>
         <p className="mb-4 font-brand text-sm leading-snug text-[#561d11]/70">
-          You can answer in any language you&apos;re comfortable with. We&apos;ll
-          tailor your experience to support your preferred language.
+          {isCurator
+            ? "They can answer in any Indian regional language they\u2019re comfortable with. We\u2019ll tailor their experience to support their preferred language."
+            : "You can answer in any language you\u2019re comfortable with. We\u2019ll tailor your experience to support your preferred language."}
         </p>
 
         <div ref={dropdownRef} className="relative">
@@ -278,7 +361,7 @@ export default function OnboardingPage() {
         disabled={loading}
         className="mx-auto mb-6 flex h-12 w-full max-w-[291px] items-center justify-center rounded-full bg-[#561d11] font-brand text-lg font-medium text-[#f0eade] transition hover:bg-[#6b2517] active:scale-[0.99] disabled:opacity-60"
       >
-        {loading ? "Saving…" : "Submit & receive prompt"}
+        {loading ? "Saving…" : isCurator ? "Submit & send prompt" : "Submit & receive prompt"}
       </button>
     </>
   );

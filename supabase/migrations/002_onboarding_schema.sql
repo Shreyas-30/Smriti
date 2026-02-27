@@ -43,7 +43,7 @@ create table public.users (
   first_name  text not null default '',
   last_name   text not null default '',
   phone       text,
-  signup_type text not null default 'caregiver', -- 'self' | 'caregiver'
+  signup_type text not null default 'curator', -- 'self' | 'curator'
   created_at  timestamptz not null default now(),
   updated_at  timestamptz not null default now()
 );
@@ -184,7 +184,7 @@ create index idx_subscriptions_user_id on public.subscriptions(user_id);
 -- =========
 -- AUTH TRIGGER
 -- Fires after a new auth.users row is inserted.
--- Creates the public.users profile, and for caregivers also
+-- Creates the public.users profile, and for curators also
 -- creates the storyteller record — all from the signup metadata.
 -- =========
 create or replace function public.handle_new_user()
@@ -192,7 +192,7 @@ returns trigger language plpgsql security definer as $$
 declare
   v_signup_type text;
 begin
-  v_signup_type := coalesce(new.raw_user_meta_data->>'signup_type', 'caregiver');
+  v_signup_type := coalesce(new.raw_user_meta_data->>'signup_type', 'curator');
 
   insert into public.users (id, first_name, last_name, phone, signup_type)
   values (
@@ -204,8 +204,8 @@ begin
   )
   on conflict (id) do nothing;
 
-  -- For caregiver signups, also create the storyteller record
-  if v_signup_type = 'caregiver' then
+  -- For curator signups, also create the storyteller record
+  if v_signup_type = 'curator' then
     insert into public.storytellers (user_id, first_name, last_name, phone)
     values (
       new.id,

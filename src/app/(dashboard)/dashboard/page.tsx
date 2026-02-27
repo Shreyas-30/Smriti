@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import SettingsButton from "./SettingsButton";
+import PromptCards from "./PromptCards";
+import ChapterCards, { type Chapter } from "./ChapterCards";
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -12,44 +14,14 @@ function formatDate(date: Date): string {
   }).format(date);
 }
 
-function schedulePrompts(prompts: { id: string; custom_text: string }[]) {
+// Schedule only prompts that don't yet have a story
+function scheduleUpcoming(prompts: { id: string; custom_text: string }[]) {
   const base = new Date();
   return prompts.map((p, i) => {
     const d = new Date(base);
     d.setDate(d.getDate() + 7 * (i + 1));
-    return { ...p, scheduledFor: d };
+    return { ...p, scheduledFor: d.toISOString() };
   });
-}
-
-// ── Icons ────────────────────────────────────────────────────────────────────
-
-function CalendarIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      width="20"
-      height="20"
-      viewBox="0 0 20 20"
-      fill="none"
-      className={className}
-    >
-      <rect
-        x="2"
-        y="3.5"
-        width="16"
-        height="14"
-        rx="3"
-        stroke="currentColor"
-        strokeWidth="1.5"
-      />
-      <path
-        d="M6 2v3M14 2v3"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-      />
-      <path d="M2 8.5h16" stroke="currentColor" strokeWidth="1.5" />
-    </svg>
-  );
 }
 
 // ── Page ─────────────────────────────────────────────────────────────────────
@@ -60,15 +32,46 @@ export default async function DashboardPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Auth redirect handled by (dashboard)/layout.tsx — user is always defined here
-  const { data: rawPrompts } = await supabase
-    .from("user_prompts")
-    .select("id, custom_text, created_at")
-    .eq("user_id", user!.id)
-    .order("created_at");
+  const [{ data: rawPrompts }, { data: rawStories }] = await Promise.all([
+    supabase
+      .from("user_prompts")
+      .select("id, custom_text, created_at")
+      .eq("user_id", user!.id)
+      .order("created_at"),
+    supabase
+      .from("user_stories")
+      .select("id, prompt_id, content, language, updated_at")
+      .eq("user_id", user!.id),
+  ]);
 
-  const scheduled = schedulePrompts(rawPrompts ?? []);
-  const firstPromptDate = scheduled[0]?.scheduledFor;
+  // Build a lookup: promptId → story
+  type StoryRow = { id: string; content: string; language: string; updatedAt: string };
+  const storyMap = new Map<string, StoryRow>(
+    (rawStories ?? []).map((s) => [
+      s.prompt_id,
+      { id: s.id, content: s.content, language: s.language, updatedAt: s.updated_at },
+    ])
+  );
+
+  // Split prompts: those with a saved story become chapters; the rest stay upcoming
+  const chapters: Chapter[] = [];
+  const promptsWithoutStory: { id: string; custom_text: string }[] = [];
+
+  for (const p of rawPrompts ?? []) {
+    const story = storyMap.get(p.id);
+    if (story) {
+      chapters.push({
+        id: p.id,
+        custom_text: p.custom_text,
+        story: { content: story.content, language: story.language, updatedAt: story.updatedAt },
+      });
+    } else {
+      promptsWithoutStory.push(p);
+    }
+  }
+
+  const upcoming = scheduleUpcoming(promptsWithoutStory);
+  const firstUpcomingDate = upcoming[0]?.scheduledFor;
 
   return (
     <main className="min-h-dvh bg-[#f0eade]">
@@ -97,20 +100,24 @@ export default async function DashboardPage() {
               Your Chapters
             </h2>
             <span className="font-brand text-sm text-[#561d11]/60">
-              0 recordings
+              {chapters.length} {chapters.length === 1 ? "story" : "stories"}
             </span>
           </div>
 
-          <div className="rounded-[20px] border-2 border-dashed border-[#561d11]/20 px-6 py-8 flex flex-col items-center gap-3">
-            <p className="font-serif text-[#4c1815] text-2xl tracking-[-0.03em] text-center leading-tight">
-              Your story starts here.
-            </p>
-            <p className="font-brand text-sm text-center text-[#561d11]/60 leading-relaxed max-w-[260px]">
-              {firstPromptDate
-                ? `Your first prompt arrives ${formatDate(firstPromptDate)}. We'll send it over WhatsApp — just reply to record your first chapter.`
-                : "Your chapters will appear here after you respond to your first WhatsApp prompt."}
-            </p>
-          </div>
+          {chapters.length > 0 ? (
+            <ChapterCards chapters={chapters} />
+          ) : (
+            <div className="rounded-[20px] border-2 border-dashed border-[#561d11]/20 px-6 py-8 flex flex-col items-center gap-3">
+              <p className="font-serif text-[#4c1815] text-2xl tracking-[-0.03em] text-center leading-tight">
+                Your story starts here.
+              </p>
+              <p className="font-brand text-sm text-center text-[#561d11]/60 leading-relaxed max-w-[260px]">
+                {firstUpcomingDate
+                  ? `Your first prompt arrives ${formatDate(new Date(firstUpcomingDate))}. Tap a prompt below to record or write your first chapter.`
+                  : "Your chapters will appear here once you've responded to a prompt."}
+              </p>
+            </div>
+          )}
         </section>
 
         {/* ── Upcoming ── */}
@@ -120,39 +127,11 @@ export default async function DashboardPage() {
               Upcoming
             </h2>
             <span className="font-brand text-sm text-[#561d11]/60">
-              {scheduled.length} scheduled
+              {upcoming.length} scheduled
             </span>
           </div>
 
-          {scheduled.length === 0 ? (
-            <p className="font-brand text-sm text-[#561d11]/60 text-center py-4">
-              No prompts yet.{" "}
-              <Link href="/onboarding" className="underline underline-offset-4">
-                Add some to get started.
-              </Link>
-            </p>
-          ) : (
-            <div className="flex flex-col gap-3">
-              {scheduled.map((prompt) => (
-                <div
-                  key={prompt.id}
-                  className="rounded-[20px] bg-[#561d11] px-5 py-5"
-                >
-                  <div className="flex items-start gap-3">
-                    <CalendarIcon className="shrink-0 mt-0.5 text-[#f0eade]/60" />
-                    <div>
-                      <p className="font-brand font-medium text-[#f0eade] text-base leading-snug">
-                        {prompt.custom_text}
-                      </p>
-                      <p className="mt-2 font-brand text-sm text-[#f0eade]/70">
-                        Scheduled for {formatDate(prompt.scheduledFor)}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+          <PromptCards prompts={upcoming} />
 
           <Link
             href="/onboarding"
