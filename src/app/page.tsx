@@ -6,28 +6,34 @@ import { useState } from "react";
 
 const NOISE_URL = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`;
 
+// Actual image aspect ratios: w/h
+// photo-1: 948x664 (1.428)   photo-2: 628x944 (0.665)   photo-3: 636x804 (0.791)
+// photo-4: 936x664 (1.410)   photo-5: 648x472 (1.373)   photo-6: 624x412 (1.515)
+// photo-7: 936x1300 (0.720)  photo-8: 876x648 (1.352)   photo-9: 840x676 (1.243)
+// photo-10: 640x900 (0.711)  photo-11: 1448x976 (1.484) photo-12: 1072x800 (1.340)
+// photo-13: 804x1072 (0.750) photo-14: 748x996 (0.751)  stamp: 232x278 (0.835)
 const CLUSTERS = {
   "top-left": [
-    { id: 1, src: "/landing/photo-1.png", pos: { left: "3%", top: "3%" }, w: "min(350px, 24.4vw)", h: "min(268px, 18.6vw)", rotate: -5, z: 3 },
-    { id: 2, src: "/landing/photo-2.png", pos: { left: "16%", top: "18%" }, w: "min(231px, 16.1vw)", h: "min(290px, 20.2vw)", rotate: -2, z: 2 },
-    { id: 3, src: "/landing/photo-3.png", pos: { left: "19%", top: "3%" }, w: "min(250px, 17.4vw)", h: "min(205px, 14.3vw)", rotate: 4, z: 1 },
+    { id: 1, src: "/landing/photo-1.png", pos: { left: "3%", top: "3%" }, w: "min(350px, 24.4vw)", ar: "948/664", rotate: -5, z: 3 },
+    { id: 2, src: "/landing/photo-2.png", pos: { left: "16%", top: "18%" }, w: "min(231px, 16.1vw)", ar: "628/944", rotate: -2, z: 2 },
+    { id: 3, src: "/landing/photo-3.png", pos: { left: "19%", top: "3%" }, w: "min(250px, 17.4vw)", ar: "636/804", rotate: 4, z: 1 },
   ],
   "bottom-left": [
-    { id: 4, src: "/landing/photo-4.png", pos: { left: "4%", bottom: "7%" }, w: "min(156px, 10.9vw)", h: "min(210px, 14.6vw)", rotate: 3, z: 2 },
-    { id: 5, src: "/landing/photo-5.png", pos: { left: "13%", bottom: "18%" }, w: "min(231px, 16.1vw)", h: "min(198px, 13.8vw)", rotate: -5, z: 3 },
-    { id: 6, src: "/landing/photo-6.png", pos: { left: "12%", bottom: "2%" }, w: "min(178px, 12.4vw)", h: "min(225px, 15.6vw)", rotate: 2, z: 1 },
+    { id: 4, src: "/landing/photo-4.png", pos: { left: "4%", bottom: "7%" }, w: "min(200px, 13.9vw)", ar: "936/664", rotate: 3, z: 2 },
+    { id: 5, src: "/landing/photo-5.png", pos: { left: "13%", bottom: "18%" }, w: "min(231px, 16.1vw)", ar: "648/472", rotate: -5, z: 3 },
+    { id: 6, src: "/landing/photo-6.png", pos: { left: "12%", bottom: "2%" }, w: "min(210px, 14.6vw)", ar: "624/412", rotate: 2, z: 1 },
   ],
   "top-right": [
-    { id: 7, src: "/landing/photo-7.png", pos: { right: "13%", top: "2%" }, w: "min(303px, 21vw)", h: "min(243px, 16.9vw)", rotate: 2, z: 2 },
-    { id: 8, src: "/landing/photo-8.png", pos: { right: "5%", top: "1%" }, w: "min(215px, 14.9vw)", h: "min(173px, 12vw)", rotate: 5, z: 3 },
-    { id: 9, src: "/landing/photo-9.png", pos: { right: "8%", top: "22%" }, w: "min(206px, 14.4vw)", h: "min(263px, 18.3vw)", rotate: -4, z: 1 },
-    { id: 10, src: "/landing/photo-10.png", pos: { right: "18%", top: "19%" }, w: "min(223px, 15.5vw)", h: "min(206px, 14.4vw)", rotate: -1, z: 4 },
+    { id: 7, src: "/landing/photo-7.png", pos: { right: "13%", top: "2%" }, w: "min(250px, 17.4vw)", ar: "936/1300", rotate: 2, z: 2 },
+    { id: 8, src: "/landing/photo-8.png", pos: { right: "5%", top: "1%" }, w: "min(215px, 14.9vw)", ar: "876/648", rotate: 5, z: 3 },
+    { id: 9, src: "/landing/photo-9.png", pos: { right: "8%", top: "22%" }, w: "min(206px, 14.4vw)", ar: "840/676", rotate: -4, z: 1 },
+    { id: 10, src: "/landing/photo-10.png", pos: { right: "18%", top: "19%" }, w: "min(190px, 13.2vw)", ar: "640/900", rotate: -1, z: 4 },
   ],
   "bottom-right": [
-    { id: 11, src: "/landing/stamp.png", pos: { right: "21%", bottom: "14%" }, w: "min(90px, 6.3vw)", h: "min(105px, 7.3vw)", rotate: -5, z: 4 },
-    { id: 12, src: "/landing/photo-12.png", pos: { right: "12%", bottom: "2%" }, w: "min(263px, 18.3vw)", h: "min(175px, 12.2vw)", rotate: -3, z: 1 },
-    { id: 13, src: "/landing/photo-13.png", pos: { right: "5%", bottom: "7%" }, w: "min(169px, 11.8vw)", h: "min(253px, 17.5vw)", rotate: 3, z: 2 },
-    { id: 14, src: "/landing/photo-14.png", pos: { right: "1%", bottom: "0%" }, w: "min(138px, 9.5vw)", h: "min(228px, 15.8vw)", rotate: 6, z: 3 },
+    { id: 11, src: "/landing/stamp.png", pos: { right: "21%", bottom: "14%" }, w: "min(90px, 6.3vw)", ar: "232/278", rotate: -5, z: 4 },
+    { id: 12, src: "/landing/photo-12.png", pos: { right: "12%", bottom: "2%" }, w: "min(263px, 18.3vw)", ar: "1072/800", rotate: -3, z: 1 },
+    { id: 13, src: "/landing/photo-13.png", pos: { right: "5%", bottom: "7%" }, w: "min(169px, 11.8vw)", ar: "804/1072", rotate: 3, z: 2 },
+    { id: 14, src: "/landing/photo-14.png", pos: { right: "1%", bottom: "0%" }, w: "min(138px, 9.5vw)", ar: "748/996", rotate: 6, z: 3 },
   ],
 } as const;
 
@@ -171,7 +177,7 @@ export default function HomePage() {
         {/* ── Desktop photo collage (grouped by cluster) ── */}
         {Object.entries(CLUSTERS).map(([cluster, photos]) => (
           <div key={cluster} className="photo-cluster absolute inset-0 hidden md:block">
-            {photos.map(({ id, src, pos, w, h, rotate, z }) => (
+            {photos.map(({ id, src, pos, w, ar, rotate, z }) => (
               <div
                 key={id}
                 className="photo-card absolute overflow-hidden"
@@ -180,7 +186,7 @@ export default function HomePage() {
                     "--base-transform": `rotate(${rotate}deg)`,
                     ...pos,
                     width: w,
-                    height: h,
+                    aspectRatio: ar,
                     zIndex: z,
                   } as React.CSSProperties
                 }
@@ -259,7 +265,7 @@ export default function HomePage() {
           <p
             className="text-[#5c2a18] leading-relaxed max-w-[320px] sm:max-w-[400px]"
             style={{
-              fontFamily: "var(--font-instrument-serif)",
+              fontFamily: "var(--font-instrument-sans)",
               fontSize: "clamp(17px, 1.5vw, 21px)",
             }}
           >
