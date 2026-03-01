@@ -3,13 +3,8 @@
 import { Suspense, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { LANGUAGES } from "@/lib/languages";
 import toast from "react-hot-toast";
-
-const LANGUAGES = [
-  { value: "en", label: "English" },
-  { value: "hi", label: "Hindi" },
-  { value: "hi-en", label: "Hindi + English" },
-];
 
 const SUGGESTED_PROMPTS = [
   "What was the home you grew up in like?",
@@ -39,7 +34,6 @@ function OnboardingContent() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [customPrompt, setCustomPrompt] = useState("");
   const [loading, setLoading] = useState(false);
-  const [showSuccess, setShowSuccess] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Close language dropdown on outside click
@@ -111,7 +105,7 @@ function OnboardingContent() {
 
       await saveToDb(user.id, language, prompts);
       if (isCurator) {
-        setShowSuccess(true);
+        router.push("/dashboard?welcome=1");
       } else {
         router.push("/dashboard");
       }
@@ -131,70 +125,6 @@ function OnboardingContent() {
 
   return (
     <>
-      {/* ── Success modal (caregiver only) ── */}
-      {showSuccess && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 px-4 pb-8">
-          <div className="w-full max-w-sm rounded-[32px] bg-[#f0eade] px-6 py-8 flex flex-col items-center gap-5">
-            {/* Icon circle */}
-            <div className="w-20 h-20 rounded-full bg-[#561d11] flex items-center justify-center">
-              <svg width="36" height="36" viewBox="0 0 24 24" fill="none">
-                <path
-                  d="M22 2L11 13"
-                  stroke="#f0eade"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-                <path
-                  d="M22 2L15 22L11 13L2 9L22 2Z"
-                  stroke="#f0eade"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </div>
-
-            <div className="text-center">
-              <p className="font-serif text-[1.75rem] leading-tight tracking-[-0.03em] text-[#4c1815]">
-                Your first prompt is on its way!
-              </p>
-              <p className="mt-1 font-brand text-sm text-[#561d11]/60">
-                Sent via WhatsApp
-              </p>
-            </div>
-
-            {/* Info box */}
-            <div className="w-full rounded-[20px] bg-[#561d11]/8 border border-[#561d11]/15 px-5 py-4 flex flex-col gap-3">
-              <div className="flex items-start gap-3">
-                <span className="mt-0.5 shrink-0 w-5 h-5 rounded-full bg-[#561d11]/15 flex items-center justify-center text-[#561d11] text-xs font-bold">
-                  1
-                </span>
-                <p className="font-brand text-sm text-[#561d11] leading-snug">
-                  Next prompts will be sent once a week over WhatsApp
-                </p>
-              </div>
-              <div className="flex items-start gap-3">
-                <span className="mt-0.5 shrink-0 w-5 h-5 rounded-full bg-[#561d11]/15 flex items-center justify-center text-[#561d11] text-xs font-bold">
-                  2
-                </span>
-                <p className="font-brand text-sm text-[#561d11] leading-snug">
-                  You&apos;ll be notified when they record a story
-                </p>
-              </div>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => router.push("/dashboard")}
-              className="w-full h-12 rounded-full bg-[#561d11] font-brand text-base font-medium text-[#f0eade] transition hover:bg-[#6b2517] active:scale-[0.99]"
-            >
-              Continue to dashboard
-            </button>
-          </div>
-        </div>
-      )}
-
       <h1 className="mb-6 text-center font-serif text-[3rem] leading-none tracking-[-0.04em] text-[#4c1815]">
         Smriti
       </h1>
@@ -231,7 +161,9 @@ function OnboardingContent() {
                   : "font-medium text-[#561d11]/40"
               }
             >
-              {selectedLang?.label ?? "Select a language"}
+              {selectedLang
+                ? `${selectedLang.native}${selectedLang.native !== selectedLang.label ? ` · ${selectedLang.label}` : ""}`
+                : "Select a language"}
             </span>
             <svg
               className={`shrink-0 w-4 h-4 text-[#561d11]/60 transition-transform duration-200 ${
@@ -260,13 +192,18 @@ function OnboardingContent() {
                     setLanguage(opt.value);
                     setLangOpen(false);
                   }}
-                  className={`w-full px-5 py-3 text-left font-brand text-base transition hover:bg-[#561d11]/5 ${
-                    language === opt.value
-                      ? "text-[#561d11] font-semibold"
-                      : "text-[#561d11]/70"
+                  className={`w-full px-5 py-3 text-left transition hover:bg-[#561d11]/5 ${
+                    language === opt.value ? "bg-[#561d11]/5" : ""
                   }`}
                 >
-                  {opt.label}
+                  <span className={`block font-brand text-base font-medium ${language === opt.value ? "text-[#561d11]" : "text-[#561d11]/80"}`}>
+                    {opt.native}
+                  </span>
+                  {opt.native !== opt.label && (
+                    <span className="block font-brand text-xs text-[#561d11]/45 mt-0.5">
+                      {opt.label}
+                    </span>
+                  )}
                 </button>
               ))}
             </div>

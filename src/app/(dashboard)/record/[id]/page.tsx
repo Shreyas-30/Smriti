@@ -3,15 +3,10 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { LANGUAGES } from "@/lib/languages";
 import toast from "react-hot-toast";
 
-const LANGUAGES = [
-  { value: "en", label: "English" },
-  { value: "hi", label: "Hindi" },
-  { value: "hi-en", label: "Hindi + English" },
-];
-
-type RecordingState = "idle" | "recording" | "done";
+type RecordingState = "idle" | "recording" | "transcribing" | "done";
 type InputMode = "voice" | "text";
 
 function MicIcon({ className }: { className?: string }) {
@@ -56,6 +51,13 @@ export default function RecordPage() {
 
   const dropdownRef = useRef<HTMLDivElement>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const streamRef = useRef<MediaStream | null>(null);
+
+  const LANG_TO_SARVAM: Record<string, string> = {
+    en: "en-IN", hi: "hi-IN", mr: "mr-IN", gu: "gu-IN", ta: "ta-IN",
+  };
 
   // Fetch prompt + any existing story
   useEffect(() => {
@@ -106,31 +108,95 @@ export default function RecordPage() {
       timerRef.current = setInterval(() => setSeconds((s) => s + 1), 1000);
     } else {
       if (timerRef.current) clearInterval(timerRef.current);
-      if (recordingState === "idle") setSeconds(0);
+      if (recordingState === "idle" || recordingState === "done") setSeconds(0);
     }
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
   }, [recordingState]);
 
-  function handleStartRecording() {
+  async function handleStartRecording() {
     if (!language) {
       toast.error("Please select a language first.");
       return;
     }
+
+    let stream: MediaStream;
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    } catch {
+      toast.error("Microphone access denied. Please allow microphone access and try again.");
+      return;
+    }
+
+    streamRef.current = stream;
+    audioChunksRef.current = [];
+
+    const mimeType = MediaRecorder.isTypeSupported("audio/webm")
+      ? "audio/webm"
+      : "audio/ogg";
+
+    const mediaRecorder = new MediaRecorder(stream, { mimeType });
+    mediaRecorderRef.current = mediaRecorder;
+
+    mediaRecorder.ondataavailable = (e) => {
+      if (e.data.size > 0) audioChunksRef.current.push(e.data);
+    };
+
+    mediaRecorder.start();
     setRecordingState("recording");
   }
 
   function handleStopRecording() {
-    setRecordingState("done");
-  }
+    const mediaRecorder = mediaRecorderRef.current;
+    if (!mediaRecorder) return;
 
-  function handleRecordAgain() {
-    setRecordingState("idle");
-    setSeconds(0);
+    mediaRecorder.onstop = async () => {
+      setRecordingState("transcribing");
+
+      streamRef.current?.getTracks().forEach((t) => t.stop());
+      streamRef.current = null;
+
+      const baseMimeType = mediaRecorder.mimeType.split(";")[0];
+      const blob = new Blob(audioChunksRef.current, { type: baseMimeType });
+      audioChunksRef.current = [];
+
+      const form = new FormData();
+      form.append("file", blob);
+      const sarvamCode = LANG_TO_SARVAM[language];
+      if (sarvamCode) form.append("language_code", sarvamCode);
+
+      try {
+        const res = await fetch("/api/transcribe", { method: "POST", body: form });
+        const data = await res.json();
+
+        if (!res.ok || data.error) {
+          const errMsg = typeof data.error === "string" ? data.error : "Transcription failed. Please try again.";
+          toast.error(errMsg);
+          setRecordingState("idle");
+          return;
+        }
+
+        setStoryText(data.transcript);
+        setInputMode("text");
+        setRecordingState("done");
+      } catch {
+        toast.error("Transcription failed. Please try again.");
+        setRecordingState("idle");
+      }
+    };
+
+    mediaRecorder.stop();
   }
 
   function handleModeSwitch(mode: InputMode) {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
+      mediaRecorderRef.current.stop();
+    }
+    streamRef.current?.getTracks().forEach((t) => t.stop());
+    streamRef.current = null;
+    audioChunksRef.current = [];
+    mediaRecorderRef.current = null;
     setInputMode(mode);
     setRecordingState("idle");
     setSeconds(0);
@@ -225,7 +291,9 @@ export default function RecordPage() {
             className="w-full h-[50px] rounded-[20px] border border-[#561d11]/20 bg-white px-5 flex items-center justify-between font-brand text-base transition focus:outline-none focus:border-[#561d11]/50 disabled:opacity-50"
           >
             <span className={selectedLang ? "text-[#561d11] font-medium" : "font-medium text-[#561d11]/40"}>
-              {selectedLang?.label ?? "Select a language"}
+              {selectedLang
+                ? `${selectedLang.native}${selectedLang.native !== selectedLang.label ? ` · ${selectedLang.label}` : ""}`
+                : "Select a language"}
             </span>
             <svg
               className={`shrink-0 w-4 h-4 text-[#561d11]/60 transition-transform duration-200 ${langOpen ? "rotate-180" : ""}`}
@@ -243,11 +311,18 @@ export default function RecordPage() {
                   key={opt.value}
                   type="button"
                   onClick={() => { setLanguage(opt.value); setLangOpen(false); }}
-                  className={`w-full px-5 py-3 text-left font-brand text-base transition hover:bg-[#561d11]/5 ${
-                    language === opt.value ? "text-[#561d11] font-semibold" : "text-[#561d11]/70"
+                  className={`w-full px-5 py-3 text-left transition hover:bg-[#561d11]/5 ${
+                    language === opt.value ? "bg-[#561d11]/5" : ""
                   }`}
                 >
-                  {opt.label}
+                  <span className={`block font-brand text-base font-medium ${language === opt.value ? "text-[#561d11]" : "text-[#561d11]/80"}`}>
+                    {opt.native}
+                  </span>
+                  {opt.native !== opt.label && (
+                    <span className="block font-brand text-xs text-[#561d11]/45 mt-0.5">
+                      {opt.label}
+                    </span>
+                  )}
                 </button>
               ))}
             </div>
@@ -310,31 +385,28 @@ export default function RecordPage() {
       )}
 
       {/* ── Recording state visual (voice mode only) ── */}
-      {inputMode === "voice" && recordingState !== "idle" && (
+      {inputMode === "voice" && recordingState === "recording" && (
         <div className="flex flex-col items-center gap-5 mb-8">
-          {recordingState === "recording" ? (
-            <div className="relative flex items-center justify-center w-24 h-24">
-              <span className="absolute inset-0 rounded-full bg-[#561d11]/15 animate-ping" />
-              <span className="absolute inset-2 rounded-full bg-[#561d11]/10" />
-              <div className="relative w-16 h-16 rounded-full bg-[#561d11] flex items-center justify-center z-10">
-                <MicIcon className="text-[#f0eade]" />
-              </div>
+          <div className="relative flex items-center justify-center w-24 h-24">
+            <span className="absolute inset-0 rounded-full bg-[#561d11]/15 animate-ping" />
+            <span className="absolute inset-2 rounded-full bg-[#561d11]/10" />
+            <div className="relative w-16 h-16 rounded-full bg-[#561d11] flex items-center justify-center z-10">
+              <MicIcon className="text-[#f0eade]" />
             </div>
-          ) : (
-            <div className="w-16 h-16 rounded-full bg-[#561d11]/20 flex items-center justify-center">
-              <MicIcon className="text-[#561d11]/60" />
-            </div>
-          )}
-
-          <p className={`font-brand text-3xl font-medium tabular-nums tracking-widest ${
-            recordingState === "recording" ? "text-[#561d11]" : "text-[#561d11]/50"
-          }`}>
+          </div>
+          <p className="font-brand text-3xl font-medium tabular-nums tracking-widest text-[#561d11]">
             {formatTime(seconds)}
           </p>
+        </div>
+      )}
 
-          {recordingState === "done" && (
-            <p className="font-brand text-sm text-[#561d11]/50">Recording complete</p>
-          )}
+      {/* ── Transcribing visual ── */}
+      {inputMode === "voice" && recordingState === "transcribing" && (
+        <div className="flex flex-col items-center gap-4 mb-8">
+          <div className="w-16 h-16 rounded-full bg-[#561d11]/10 flex items-center justify-center animate-pulse">
+            <MicIcon className="text-[#561d11]/50" />
+          </div>
+          <p className="font-brand text-sm text-[#561d11]/60">Transcribing…</p>
         </div>
       )}
 
@@ -368,22 +440,13 @@ export default function RecordPage() {
           </button>
         )}
 
-        {inputMode === "voice" && recordingState === "done" && (
-          <>
-            <button
-              disabled
-              title="Transcription API coming soon"
-              className="w-full h-14 rounded-full bg-[#561d11] font-brand text-lg font-medium text-[#f0eade] opacity-40 flex items-center justify-center cursor-not-allowed"
-            >
-              Save story
-            </button>
-            <button
-              onClick={handleRecordAgain}
-              className="w-full h-12 rounded-full border border-[#561d11] font-brand text-base font-medium text-[#561d11] transition hover:bg-[#561d11]/5 active:scale-[0.99]"
-            >
-              Record again
-            </button>
-          </>
+        {inputMode === "voice" && recordingState === "transcribing" && (
+          <button
+            disabled
+            className="w-full h-14 rounded-full bg-[#561d11]/40 font-brand text-lg font-medium text-[#f0eade] flex items-center justify-center cursor-not-allowed"
+          >
+            Transcribing…
+          </button>
         )}
 
         {/* Text mode */}

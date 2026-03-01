@@ -15,15 +15,25 @@ export async function updateSession(request: NextRequest) {
           return request.cookies.getAll();
         },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }: any) => {
-            response.cookies.set(name, value, options);
-          });
+          // Mirror onto the request so downstream server components see fresh tokens
+          cookiesToSet.forEach(({ name, value }: any) =>
+            request.cookies.set(name, value)
+          );
+          response = NextResponse.next({ request });
+          cookiesToSet.forEach(({ name, value, options }: any) =>
+            response.cookies.set(name, value, options)
+          );
         },
       },
     },
   );
 
-  const { data } = await supabase.auth.getUser();
+  const { data, error } = await supabase.auth.getUser();
+
+  // Stale / invalidated refresh token — clear it so the error stops repeating
+  if (error?.name === "AuthApiError") {
+    await supabase.auth.signOut({ scope: "local" });
+  }
 
   const pathname = request.nextUrl.pathname;
   const isProtected = PROTECTED_PREFIXES.some((p) => pathname.startsWith(p));

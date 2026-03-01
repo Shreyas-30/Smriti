@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
@@ -10,17 +9,16 @@ export type ScheduledPrompt = {
   scheduledFor: string; // ISO string
 };
 
-function formatDate(iso: string): string {
+function formatShortDate(iso: string): string {
   return new Intl.DateTimeFormat("en-US", {
-    month: "long",
+    month: "short",
     day: "numeric",
-    year: "numeric",
   }).format(new Date(iso));
 }
 
-function CalendarIcon({ className }: { className?: string }) {
+function CalendarIcon() {
   return (
-    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className={className}>
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
       <rect x="2" y="3.5" width="16" height="14" rx="3" stroke="currentColor" strokeWidth="1.5" />
       <path d="M6 2v3M14 2v3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
       <path d="M2 8.5h16" stroke="currentColor" strokeWidth="1.5" />
@@ -28,19 +26,24 @@ function CalendarIcon({ className }: { className?: string }) {
   );
 }
 
-function MicIcon({ className }: { className?: string }) {
+function ClockIcon() {
   return (
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" className={className}>
-      <rect x="9" y="2" width="6" height="11" rx="3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M5 10a7 7 0 0 0 14 0" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-      <line x1="12" y1="19" x2="12" y2="22" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-      <line x1="9" y1="22" x2="15" y2="22" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="10" />
+      <polyline points="12 6 12 12 16 14" />
+    </svg>
+  );
+}
+
+function ChevronRightIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="9 18 15 12 9 6" />
     </svg>
   );
 }
 
 export default function PromptCards({ prompts }: { prompts: ScheduledPrompt[] }) {
-  const [openId, setOpenId] = useState<string | null>(null);
   const router = useRouter();
 
   if (prompts.length === 0) {
@@ -56,56 +59,34 @@ export default function PromptCards({ prompts }: { prompts: ScheduledPrompt[] })
 
   return (
     <div className="flex flex-col gap-3">
-      {prompts.map((prompt) => {
-        const isOpen = openId === prompt.id;
-        return (
-          <div
-            key={prompt.id}
-            onClick={() => setOpenId(isOpen ? null : prompt.id)}
-            className="rounded-[20px] bg-[#561d11] px-5 py-5 cursor-pointer transition-all active:scale-[0.99] select-none"
-          >
-            {/* ── Card header ── */}
-            <div className="flex items-start gap-3">
-              <CalendarIcon className="shrink-0 mt-0.5 text-[#f0eade]/60" />
-              <div className="flex-1 min-w-0">
-                <p className="font-brand font-medium text-[#f0eade] text-base leading-snug">
-                  {prompt.custom_text}
-                </p>
-                <p className="mt-2 font-brand text-sm text-[#f0eade]/70">
-                  Scheduled for {formatDate(prompt.scheduledFor)}
-                </p>
-              </div>
-              {/* Chevron */}
-              <svg
-                className={`shrink-0 mt-1 w-4 h-4 text-[#f0eade]/50 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
-                viewBox="0 0 16 16"
-                fill="none"
-              >
-                <path d="M3 5.5L8 10.5L13 5.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </div>
+      {prompts.map((prompt) => (
+        <button
+          key={prompt.id}
+          onClick={() => router.push(`/record/${prompt.id}`)}
+          className="w-full bg-white border border-black/5 rounded-[16px] px-6 py-5 flex items-center gap-5 hover:shadow-sm transition-shadow group text-left"
+        >
+          {/* Calendar icon in beige square */}
+          <div className="shrink-0 w-[52px] h-[52px] rounded-[14px] bg-[#f0eade] flex items-center justify-center text-[#561d11]/60">
+            <CalendarIcon />
+          </div>
 
-            {/* ── Expanded action ── */}
-            <div
-              className="overflow-hidden transition-all duration-300 ease-in-out"
-              style={{ maxHeight: isOpen ? "80px" : "0px" }}
-            >
-              <div className="pt-4 border-t border-[#f0eade]/15 mt-4">
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    router.push(`/record/${prompt.id}`);
-                  }}
-                  className="w-full h-10 rounded-full bg-[#f0eade] font-brand text-sm font-semibold text-[#561d11] transition hover:bg-[#e8e0ce] active:scale-[0.99] flex items-center justify-center gap-2"
-                >
-                  <MicIcon />
-                  Record now
-                </button>
-              </div>
+          {/* Content */}
+          <div className="flex-1 min-w-0">
+            <p className="font-serif text-[#561d11] text-[18px] leading-snug tracking-[-0.2px] truncate mb-1">
+              {prompt.custom_text}
+            </p>
+            <div className="flex items-center gap-1.5 text-[#561d11]/50 text-[14px] font-brand">
+              <ClockIcon />
+              <span>{formatShortDate(prompt.scheduledFor)}</span>
             </div>
           </div>
-        );
-      })}
+
+          {/* Chevron */}
+          <span className="shrink-0 text-[#561d11]/30 group-hover:text-[#561d11]/60 transition">
+            <ChevronRightIcon />
+          </span>
+        </button>
+      ))}
     </div>
   );
 }
