@@ -17,10 +17,21 @@ const instrumentSans = Instrument_Sans({
 
 export const metadata: Metadata = {
   title: "Smriti",
-  description: "Voice-first memory capture for Indian families.",
+  description: "Voice-first memory capture for your family.",
   metadataBase: new URL(
     process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
   ),
+  openGraph: {
+    title: "Smriti",
+    description: "Voice-first memory capture for your family.",
+    images: [{ url: "/og-image.png", width: 1200, height: 630 }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Smriti",
+    description: "Voice-first memory capture for your family.",
+    images: ["/og-image.png"],
+  },
 };
 
 export default function RootLayout({
@@ -29,7 +40,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${instrumentSerif.variable} ${instrumentSans.variable}`}>
+    <html
+      lang="en"
+      className={`${instrumentSerif.variable} ${instrumentSans.variable}`}
+    >
       <body>
         <Providers>{children}</Providers>
       </body>
