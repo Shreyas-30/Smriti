@@ -14,26 +14,138 @@ const NOISE_URL = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/
 // photo-13: 804x1072 (0.750) photo-14: 748x996 (0.751)  stamp: 232x278 (0.835)
 const CLUSTERS = {
   "top-left": [
-    { id: 1, src: "/landing/photo-1.png", pos: { left: "3%", top: "3%" }, w: "min(350px, 24.4vw)", ar: "948/664", rotate: -5, z: 0 },
-    { id: 2, src: "/landing/photo-2.png", pos: { left: "16%", top: "18%" }, w: "min(231px, 16.1vw)", ar: "628/944", rotate: -2, z: 2 },
-    { id: 3, src: "/landing/photo-3.png", pos: { left: "19%", top: "3%" }, w: "min(250px, 17.4vw)", ar: "636/804", rotate: 4, z: 1 },
+    {
+      id: 1,
+      src: "/landing/photo-1.png",
+      pos: { left: "3%", top: "3%" },
+      w: "min(350px, 24.4vw)",
+      ar: "948/664",
+      rotate: -5,
+      z: 0,
+    },
+    {
+      id: 2,
+      src: "/landing/photo-2.png",
+      pos: { left: "16%", top: "18%" },
+      w: "min(231px, 16.1vw)",
+      ar: "628/944",
+      rotate: -2,
+      z: 2,
+    },
+    {
+      id: 3,
+      src: "/landing/photo-3.png",
+      pos: { left: "19%", top: "3%" },
+      w: "min(250px, 17.4vw)",
+      ar: "636/804",
+      rotate: 4,
+      z: 1,
+    },
   ],
   "bottom-left": [
-    { id: 4, src: "/landing/photo-4.png", pos: { left: "4%", bottom: "7%" }, w: "min(200px, 13.9vw)", ar: "936/664", rotate: 3, z: 2 },
-    { id: 5, src: "/landing/photo-5.png", pos: { left: "13%", bottom: "18%" }, w: "min(231px, 16.1vw)", ar: "648/472", rotate: -5, z: 3 },
-    { id: 6, src: "/landing/photo-6.png", pos: { left: "12%", bottom: "2%" }, w: "min(210px, 14.6vw)", ar: "624/412", rotate: 2, z: 1 },
+    {
+      id: 4,
+      src: "/landing/photo-4.png",
+      pos: { left: "4%", bottom: "7%" },
+      w: "min(200px, 13.9vw)",
+      ar: "936/664",
+      rotate: 3,
+      z: 2,
+    },
+    {
+      id: 5,
+      src: "/landing/photo-5.png",
+      pos: { left: "13%", bottom: "18%" },
+      w: "min(231px, 16.1vw)",
+      ar: "648/472",
+      rotate: -5,
+      z: 3,
+    },
+    {
+      id: 6,
+      src: "/landing/photo-6.png",
+      pos: { left: "12%", bottom: "2%" },
+      w: "min(210px, 14.6vw)",
+      ar: "624/412",
+      rotate: 2,
+      z: 1,
+    },
   ],
   "top-right": [
-    { id: 7, src: "/landing/photo-7.png", pos: { right: "13%", top: "2%" }, w: "min(250px, 17.4vw)", ar: "936/1300", rotate: 2, z: 2 },
-    { id: 8, src: "/landing/photo-8.png", pos: { right: "5%", top: "1%" }, w: "min(215px, 14.9vw)", ar: "876/648", rotate: 5, z: 3 },
-    { id: 9, src: "/landing/photo-9.png", pos: { right: "8%", top: "22%" }, w: "min(206px, 14.4vw)", ar: "840/676", rotate: -4, z: 1 },
-    { id: 10, src: "/landing/photo-10.png", pos: { right: "18%", top: "19%" }, w: "min(190px, 13.2vw)", ar: "640/900", rotate: -1, z: 4 },
+    {
+      id: 7,
+      src: "/landing/photo-7.png",
+      pos: { right: "13%", top: "2%" },
+      w: "min(250px, 17.4vw)",
+      ar: "936/1300",
+      rotate: 2,
+      z: 2,
+    },
+    {
+      id: 8,
+      src: "/landing/photo-8.png",
+      pos: { right: "5%", top: "1%" },
+      w: "min(215px, 14.9vw)",
+      ar: "876/648",
+      rotate: 5,
+      z: 3,
+    },
+    {
+      id: 9,
+      src: "/landing/photo-9.png",
+      pos: { right: "8%", top: "22%" },
+      w: "min(206px, 14.4vw)",
+      ar: "840/676",
+      rotate: -4,
+      z: 1,
+    },
+    {
+      id: 10,
+      src: "/landing/photo-10.png",
+      pos: { right: "18%", top: "19%" },
+      w: "min(190px, 13.2vw)",
+      ar: "640/900",
+      rotate: -1,
+      z: 4,
+    },
   ],
   "bottom-right": [
-    { id: 11, src: "/landing/stamp.png", pos: { right: "21%", bottom: "14%" }, w: "min(126px, 8.8vw)", ar: "232/278", rotate: -5, z: 4 },
-    { id: 12, src: "/landing/photo-12.png", pos: { right: "12%", bottom: "2%" }, w: "min(368px, 25.6vw)", ar: "1072/800", rotate: -3, z: 1 },
-    { id: 13, src: "/landing/photo-13.png", pos: { right: "5%", bottom: "7%" }, w: "min(237px, 16.5vw)", ar: "804/1072", rotate: 3, z: 2 },
-    { id: 14, src: "/landing/photo-14.png", pos: { right: "1%", bottom: "0%" }, w: "min(193px, 13.3vw)", ar: "748/996", rotate: 6, z: 3 },
+    {
+      id: 11,
+      src: "/landing/stamp.png",
+      pos: { right: "21%", bottom: "14%" },
+      w: "min(126px, 8.8vw)",
+      ar: "232/278",
+      rotate: -5,
+      z: 4,
+    },
+    {
+      id: 12,
+      src: "/landing/photo-12.png",
+      pos: { right: "12%", bottom: "2%" },
+      w: "min(368px, 25.6vw)",
+      ar: "1072/800",
+      rotate: -3,
+      z: 1,
+    },
+    {
+      id: 13,
+      src: "/landing/photo-13.png",
+      pos: { right: "5%", bottom: "7%" },
+      w: "min(237px, 16.5vw)",
+      ar: "804/1072",
+      rotate: 3,
+      z: 2,
+    },
+    {
+      id: 14,
+      src: "/landing/photo-14.png",
+      pos: { right: "1%", bottom: "0%" },
+      w: "min(193px, 13.3vw)",
+      ar: "748/996",
+      rotate: 6,
+      z: 3,
+    },
   ],
 } as const;
 
@@ -43,24 +155,56 @@ const GRAIN_URL = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/
 // Subset of photos shown on mobile, with positions relative to the mobile collage container
 const MOBILE_PHOTOS = [
   {
-    id: 5, src: "/landing/photo-5.png",
-    style: { left: "2%", top: "5%", width: "55%", height: "auto", aspectRatio: "4/3" },
-    rotate: -3, z: 2,
+    id: 5,
+    src: "/landing/photo-5.png",
+    style: {
+      left: "2%",
+      top: "5%",
+      width: "55%",
+      height: "auto",
+      aspectRatio: "4/3",
+    },
+    rotate: -3,
+    z: 2,
   },
   {
-    id: 14, src: "/landing/photo-14.png",
-    style: { right: "5%", top: "0%", width: "35%", height: "auto", aspectRatio: "3/4" },
-    rotate: 4, z: 3,
+    id: 14,
+    src: "/landing/photo-14.png",
+    style: {
+      right: "5%",
+      top: "0%",
+      width: "35%",
+      height: "auto",
+      aspectRatio: "3/4",
+    },
+    rotate: 4,
+    z: 3,
   },
   {
-    id: 12, src: "/landing/photo-12.png",
-    style: { left: "5%", bottom: "2%", width: "60%", height: "auto", aspectRatio: "3/2" },
-    rotate: 2, z: 1,
+    id: 12,
+    src: "/landing/photo-12.png",
+    style: {
+      left: "5%",
+      bottom: "2%",
+      width: "60%",
+      height: "auto",
+      aspectRatio: "3/2",
+    },
+    rotate: 2,
+    z: 1,
   },
   {
-    id: 11, src: "/landing/stamp.png",
-    style: { right: "18%", bottom: "20%", width: "18%", height: "auto", aspectRatio: "5/6" },
-    rotate: -5, z: 4,
+    id: 11,
+    src: "/landing/stamp.png",
+    style: {
+      right: "18%",
+      bottom: "20%",
+      width: "18%",
+      height: "auto",
+      aspectRatio: "5/6",
+    },
+    rotate: -5,
+    z: 4,
   },
 ] as const;
 
@@ -120,7 +264,9 @@ function FAQItem({ q, a }: { q: string; a: string }) {
         className="w-full flex items-center justify-between py-5 text-left gap-4"
         style={{ fontFamily: "var(--font-instrument-sans)" }}
       >
-        <span className="text-[#3d1a0e] text-base sm:text-lg font-medium">{q}</span>
+        <span className="text-[#3d1a0e] text-base sm:text-lg font-medium">
+          {q}
+        </span>
         <span
           className="text-[#5c2a18] text-2xl shrink-0 transition-transform duration-300"
           style={{ transform: open ? "rotate(45deg)" : "rotate(0deg)" }}
@@ -176,20 +322,21 @@ export default function HomePage() {
 
         {/* ── Desktop photo collage (grouped by cluster) ── */}
         {Object.entries(CLUSTERS).map(([cluster, photos]) => (
-          <div key={cluster} className="photo-cluster absolute inset-0 hidden md:block">
+          <div
+            key={cluster}
+            className="photo-cluster absolute inset-0 hidden md:block"
+          >
             {photos.map(({ id, src, pos, w, ar, rotate, z }) => (
               <div
                 key={id}
                 className="photo-card absolute overflow-hidden"
-                style={
-                  {
-                    "--base-transform": `rotate(${rotate}deg)`,
-                    ...pos,
-                    width: w,
-                    aspectRatio: ar,
-                    zIndex: z,
-                  } as React.CSSProperties
-                }
+                style={{
+                  "--base-transform": `rotate(${rotate}deg)`,
+                  ...pos,
+                  width: w,
+                  aspectRatio: ar,
+                  zIndex: z,
+                }}
               >
                 <div className="relative w-full h-full">
                   <Image
@@ -216,7 +363,10 @@ export default function HomePage() {
         ))}
 
         {/* ── Mobile photo collage ── */}
-        <div className="relative w-full md:hidden" style={{ paddingBottom: "85%" }}>
+        <div
+          className="relative w-full md:hidden"
+          style={{ paddingBottom: "85%" }}
+        >
           {MOBILE_PHOTOS.map(({ id, src, style, rotate, z }) => (
             <div
               key={id}
@@ -263,7 +413,7 @@ export default function HomePage() {
           </h1>
 
           <p
-            className="text-[#5c2a18] leading-relaxed max-w-[320px] sm:max-w-[400px]"
+            className="text-[#5c2a18] leading-relaxed max-w-[320px] sm:max-w-100"
             style={{
               fontFamily: "var(--font-instrument-sans)",
               fontSize: "clamp(17px, 1.5vw, 21px)",
@@ -382,9 +532,9 @@ export default function HomePage() {
             className="mt-10 text-[#5c2a18]/70 text-sm sm:text-base leading-relaxed"
             style={{ fontFamily: "var(--font-instrument-sans)" }}
           >
-            A glimpse of the kind of story your family could have, like Binod and
-            Shraddha&apos;s, collected through guided prompts and turned into a
-            keepsake book.
+            A glimpse of the kind of story your family could have, like Binod
+            and Shraddha&apos;s, collected through guided prompts and turned
+            into a keepsake book.
           </p>
         </div>
       </section>
@@ -420,7 +570,10 @@ export default function HomePage() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-10 md:gap-14">
             {STEPS.map(({ step, text }) => (
-              <div key={step} className="flex flex-col items-center text-center gap-4">
+              <div
+                key={step}
+                className="flex flex-col items-center text-center gap-4"
+              >
                 <span
                   className="text-[#5c2a18] font-semibold tracking-wide uppercase text-sm"
                   style={{ fontFamily: "var(--font-instrument-sans)" }}

@@ -1,7 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { Chapter } from "./ChapterCards";
+import ShareOverlay from "./ShareOverlay";
 
 function wordCount(text: string): number {
   return text.trim().split(/\s+/).filter(Boolean).length;
@@ -73,10 +75,12 @@ function BookOpenDecorIcon() {
 
 export default function FeaturedCard({ chapter }: { chapter: Chapter }) {
   const router = useRouter();
+  const [showShare, setShowShare] = useState(false);
   const wc = wordCount(chapter.story.content);
   const title = extractTitle(chapter.story.content);
 
   return (
+    <>
     <div className="rounded-[24px] border border-black/5 bg-white shadow-sm overflow-hidden">
       <div className="flex">
         {/* Left: content */}
@@ -108,7 +112,10 @@ export default function FeaturedCard({ chapter }: { chapter: Chapter }) {
 
           {/* Actions */}
           <div className="flex gap-3">
-            <button className="flex items-center gap-2 px-5 h-10 rounded-full bg-[#f0eade] font-brand text-[14px] font-medium text-[#561d11] hover:bg-[#e5ddd0] transition active:scale-[0.98]">
+            <button
+              onClick={() => setShowShare(true)}
+              className="flex items-center gap-2 px-5 h-10 rounded-full bg-[#f0eade] font-brand text-[14px] font-medium text-[#561d11] hover:bg-[#e5ddd0] transition active:scale-[0.98]"
+            >
               <ShareIcon />
               Share
             </button>
@@ -128,5 +135,17 @@ export default function FeaturedCard({ chapter }: { chapter: Chapter }) {
         </div>
       </div>
     </div>
+
+    {showShare && (
+      <ShareOverlay
+        data={{
+          title,
+          subtitle: `Story · ${wc} words`,
+          storyUrl: `${window.location.origin}/story/${chapter.id}`,
+        }}
+        onClose={() => setShowShare(false)}
+      />
+    )}
+    </>
   );
 }

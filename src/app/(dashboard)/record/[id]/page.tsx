@@ -288,7 +288,7 @@ export default function RecordPage() {
             type="button"
             onClick={() => recordingState === "idle" && setLangOpen((o) => !o)}
             disabled={recordingState !== "idle"}
-            className="w-full h-[50px] rounded-[20px] border border-[#561d11]/20 bg-white px-5 flex items-center justify-between font-brand text-base transition focus:outline-none focus:border-[#561d11]/50 disabled:opacity-50"
+            className="w-full h-12.5 rounded-4xl border border-[#561d11]/20 bg-white px-5 flex items-center justify-between font-brand text-base transition focus:outline-none focus:border-[#561d11]/50 disabled:opacity-50"
           >
             <span className={selectedLang ? "text-[#561d11] font-medium" : "font-medium text-[#561d11]/40"}>
               {selectedLang
@@ -305,7 +305,7 @@ export default function RecordPage() {
           </button>
 
           {langOpen && (
-            <div className="absolute left-0 right-0 top-[54px] rounded-[16px] border border-[#561d11]/20 bg-white shadow-lg z-10 overflow-hidden">
+            <div className="absolute left-0 right-0 top-13.5 rounded-3xl border border-[#561d11]/20 bg-white shadow-lg z-10 overflow-hidden">
               {LANGUAGES.map((opt) => (
                 <button
                   key={opt.value}
@@ -331,7 +331,7 @@ export default function RecordPage() {
       </div>
 
       {/* ── Prompt card ── */}
-      <div className="mb-6 rounded-[20px] bg-white border border-[#561d11]/10 shadow-[0px_1px_3px_0px_rgba(0,0,0,0.08)] px-5 py-4">
+      <div className="mb-6 rounded-4xl bg-white border border-[#561d11]/10 shadow-[0px_1px_3px_0px_rgba(0,0,0,0.08)] px-5 py-4">
         <p className="font-brand font-medium text-[#561d11] text-[18px] leading-snug">
           {promptText ?? <span className="text-[#561d11]/30">Loading prompt…</span>}
         </p>
@@ -376,7 +376,7 @@ export default function RecordPage() {
             onChange={(e) => setStoryText(e.target.value)}
             placeholder="Write your story here…"
             rows={8}
-            className="w-full rounded-[20px] border border-[#561d11]/20 bg-white px-5 py-4 font-brand text-base text-[#561d11] placeholder:text-[#561d11]/35 focus:outline-none focus:border-[#561d11]/50 transition resize-none leading-relaxed"
+            className="w-full rounded-4xl border border-[#561d11]/20 bg-white px-5 py-4 font-brand text-base text-[#561d11] placeholder:text-[#561d11]/35 focus:outline-none focus:border-[#561d11]/50 transition resize-none leading-relaxed"
           />
           <p className="mt-1.5 text-right font-brand text-xs text-[#561d11]/35">
             {storyText.length} characters
