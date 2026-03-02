@@ -17,7 +17,7 @@ const schema = z
   .object({
     firstName: z.string().min(1, "Required"),
     lastName: z.string().min(1, "Required"),
-    email: z.string().email("Enter a valid email"),
+    email: z.string().email({ message: "Enter a valid email" }),
     phone: z.string().optional(),
     password: z.string().min(8, "At least 8 characters"),
     confirmPassword: z.string().min(1, "Required"),
@@ -33,7 +33,7 @@ const schema = z
 type FormValues = z.infer<typeof schema>;
 
 const inputCls =
-  "w-full h-[50px] rounded-[20px] border border-[#561d11]/30 bg-transparent px-4 " +
+  "w-full h-12.5 rounded-4xl border border-[#561d11]/30 bg-transparent px-4 " +
   "font-brand text-lg text-[#561d11] " +
   "placeholder:text-[#561d11]/55 placeholder:font-medium " +
   "focus:outline-none focus:border-[#561d11]/60 transition";
@@ -173,7 +173,7 @@ export default function SignupPage() {
       if (error) throw error;
       router.push(`/onboarding?mode=${mode}`);
     } catch (e: unknown) {
-      toast.error((e as Error)?.message ?? "Signup failed");
+      toast.error(e instanceof Error ? e.message : "Signup failed");
     } finally {
       setLoading(false);
     }

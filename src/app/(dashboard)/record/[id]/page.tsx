@@ -5,6 +5,9 @@ import { useParams, useRouter } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { LANGUAGES } from "@/lib/languages";
 import toast from "react-hot-toast";
+import Image from "next/image";
+
+const AUDIO_BUCKET = "audio-recordings";
 
 type RecordingState = "idle" | "recording" | "transcribing" | "done";
 type InputMode = "voice" | "text";
@@ -34,13 +37,100 @@ function formatTime(s: number): string {
   return `${m}:${sec}`;
 }
 
+function AudioPlayer({ src }: { src: string }) {
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+
+  function togglePlay() {
+    const audio = audioRef.current;
+    if (!audio) return;
+    if (isPlaying) {
+      audio.pause();
+    } else {
+      void audio.play();
+    }
+    setIsPlaying(!isPlaying);
+  }
+
+  function handleEnded() {
+    setIsPlaying(false);
+    setCurrentTime(0);
+    if (audioRef.current) audioRef.current.currentTime = 0;
+  }
+
+  function handleSeek(e: React.ChangeEvent<HTMLInputElement>) {
+    const val = Number(e.target.value);
+    if (audioRef.current) audioRef.current.currentTime = val;
+    setCurrentTime(val);
+  }
+
+  const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
+
+  return (
+    <div className="mb-6 rounded-4xl bg-white border border-[#561d11]/10 shadow-[0px_1px_3px_0px_rgba(0,0,0,0.08)] px-5 py-4">
+      <p className="font-brand text-xs font-medium text-[#561d11]/45 mb-3 uppercase tracking-wide">
+        Your recording
+      </p>
+      <audio
+        ref={audioRef}
+        src={src}
+        onTimeUpdate={() => setCurrentTime(audioRef.current?.currentTime ?? 0)}
+        onLoadedMetadata={() => setDuration(audioRef.current?.duration ?? 0)}
+        onEnded={handleEnded}
+      />
+      <div className="flex items-center gap-3">
+        <button
+          type="button"
+          onClick={togglePlay}
+          className="shrink-0 w-9 h-9 rounded-full bg-[#561d11] flex items-center justify-center text-[#f0eade] transition hover:bg-[#6b2517] active:scale-[0.97]"
+        >
+          {isPlaying ? (
+            <svg width="10" height="12" viewBox="0 0 10 12" fill="currentColor">
+              <rect x="0" y="0" width="3.5" height="12" rx="1" />
+              <rect x="6.5" y="0" width="3.5" height="12" rx="1" />
+            </svg>
+          ) : (
+            <svg width="11" height="13" viewBox="0 0 11 13" fill="currentColor">
+              <path d="M1 0.5L10.5 6.5L1 12.5V0.5Z" />
+            </svg>
+          )}
+        </button>
+
+        <input
+          type="range"
+          min={0}
+          max={duration || 0}
+          step={0.1}
+          value={currentTime}
+          onChange={handleSeek}
+          className="flex-1 h-1 appearance-none rounded-full cursor-pointer"
+          style={{
+            background: `linear-gradient(to right, #561d11 ${progress}%, rgba(86,29,17,0.15) ${progress}%)`,
+          }}
+        />
+
+        <span className="shrink-0 font-brand tabular-nums text-xs text-[#561d11]/50 min-w-[2.5rem] text-right">
+          {formatTime(Math.floor(currentTime))}
+          {duration > 0 && (
+            <span className="text-[#561d11]/30"> / {formatTime(Math.floor(duration))}</span>
+          )}
+        </span>
+      </div>
+    </div>
+  );
+}
+
 export default function RecordPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const supabase = createSupabaseBrowserClient();
 
   const [promptText, setPromptText] = useState<string | null>(null);
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [existingStoryId, setExistingStoryId] = useState<string | null>(null);
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [inputMode, setInputMode] = useState<InputMode>("voice");
   const [language, setLanguage] = useState("");
   const [langOpen, setLangOpen] = useState(false);
@@ -51,6 +141,7 @@ export default function RecordPage() {
 
   const dropdownRef = useRef<HTMLDivElement>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const streamRef = useRef<MediaStream | null>(null);
@@ -64,10 +155,10 @@ export default function RecordPage() {
     async function load() {
       const [{ data: prompt, error: promptErr }, { data: story }] =
         await Promise.all([
-          supabase.from("user_prompts").select("custom_text").eq("id", id).single(),
+          supabase.from("user_prompts").select("custom_text, image_url").eq("id", id).single(),
           supabase
             .from("user_stories")
-            .select("id, content, language")
+            .select("id, content, language, audio_url")
             .eq("prompt_id", id)
             .maybeSingle(),
         ]);
@@ -79,17 +170,26 @@ export default function RecordPage() {
       }
 
       setPromptText(prompt.custom_text);
+      setImageUrl(prompt.image_url ?? null);
 
       if (story) {
         setExistingStoryId(story.id);
         setStoryText(story.content);
         setLanguage(story.language);
+        setAudioUrl(story.audio_url ?? null);
         setInputMode("text");
       }
     }
 
     load();
   }, [id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Clean up polling on unmount
+  useEffect(() => {
+    return () => {
+      if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+    };
+  }, []);
 
   // Close language dropdown on outside click
   useEffect(() => {
@@ -114,6 +214,26 @@ export default function RecordPage() {
       if (timerRef.current) clearInterval(timerRef.current);
     };
   }, [recordingState]);
+
+  // Upload audio blob to Supabase storage (fire-and-forget, non-blocking)
+  async function uploadAudioToStorage(blob: Blob) {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const ext = blob.type.includes("webm") ? "webm" : "ogg";
+      // One file per user+prompt, overwrite on re-record
+      const path = `${user.id}/${id}.${ext}`;
+      const { error } = await supabase.storage
+        .from(AUDIO_BUCKET)
+        .upload(path, blob, { contentType: blob.type, upsert: true });
+      if (!error) {
+        const { data } = supabase.storage.from(AUDIO_BUCKET).getPublicUrl(path);
+        setAudioUrl(data.publicUrl);
+      }
+    } catch {
+      // Non-fatal — transcription continues regardless
+    }
+  }
 
   async function handleStartRecording() {
     if (!language) {
@@ -147,6 +267,39 @@ export default function RecordPage() {
     setRecordingState("recording");
   }
 
+  function stopPolling() {
+    if (pollIntervalRef.current) {
+      clearInterval(pollIntervalRef.current);
+      pollIntervalRef.current = null;
+    }
+  }
+
+  function startPolling(jobId: string) {
+    pollIntervalRef.current = setInterval(async () => {
+      try {
+        const res = await fetch(`/api/transcribe/status?jobId=${encodeURIComponent(jobId)}`);
+        const data = await res.json();
+
+        if (data.transcript) {
+          stopPolling();
+          setStoryText(data.transcript);
+          setInputMode("text");
+          setRecordingState("done");
+        } else if (data.error || !res.ok) {
+          stopPolling();
+          const errMsg = typeof data.error === "string" ? data.error : "Transcription failed. Please try again.";
+          toast.error(errMsg);
+          setRecordingState("idle");
+        }
+        // data.status === "processing" → keep polling
+      } catch {
+        stopPolling();
+        toast.error("Transcription failed. Please try again.");
+        setRecordingState("idle");
+      }
+    }, 5000);
+  }
+
   function handleStopRecording() {
     const mediaRecorder = mediaRecorderRef.current;
     if (!mediaRecorder) return;
@@ -161,25 +314,26 @@ export default function RecordPage() {
       const blob = new Blob(audioChunksRef.current, { type: baseMimeType });
       audioChunksRef.current = [];
 
+      // Upload to storage in parallel — doesn't block transcription
+      void uploadAudioToStorage(blob);
+
       const form = new FormData();
       form.append("file", blob);
       const sarvamCode = LANG_TO_SARVAM[language];
       if (sarvamCode) form.append("language_code", sarvamCode);
 
       try {
-        const res = await fetch("/api/transcribe", { method: "POST", body: form });
+        const res = await fetch("/api/transcribe/start", { method: "POST", body: form });
         const data = await res.json();
 
         if (!res.ok || data.error) {
-          const errMsg = typeof data.error === "string" ? data.error : "Transcription failed. Please try again.";
+          const errMsg = typeof data.error === "string" ? data.error : "Failed to start transcription.";
           toast.error(errMsg);
           setRecordingState("idle");
           return;
         }
 
-        setStoryText(data.transcript);
-        setInputMode("text");
-        setRecordingState("done");
+        startPolling(data.jobId);
       } catch {
         toast.error("Transcription failed. Please try again.");
         setRecordingState("idle");
@@ -190,6 +344,7 @@ export default function RecordPage() {
   }
 
   function handleModeSwitch(mode: InputMode) {
+    stopPolling();
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
       mediaRecorderRef.current.stop();
     }
@@ -228,6 +383,7 @@ export default function RecordPage() {
           prompt_id: id,
           content: storyText.trim(),
           language,
+          ...(audioUrl ? { audio_url: audioUrl } : {}),
         },
         { onConflict: "user_id,prompt_id" }
       );
@@ -237,7 +393,7 @@ export default function RecordPage() {
       toast.success(existingStoryId ? "Story updated!" : "Story saved!");
       router.push("/dashboard");
     } catch (e: unknown) {
-      toast.error((e as Error)?.message ?? "Failed to save story.");
+      toast.error(e instanceof Error ? e.message : "Failed to save story.");
     } finally {
       setSaving(false);
     }
@@ -330,12 +486,28 @@ export default function RecordPage() {
         </div>
       </div>
 
+      {/* ── Prompt image ── */}
+      {imageUrl && (
+        <div className="relative w-full h-52 rounded-3xl overflow-hidden mb-4">
+          <Image
+            src={imageUrl}
+            alt="Prompt image"
+            fill
+            className="object-cover"
+            sizes="(max-width: 640px) 100vw, 600px"
+          />
+        </div>
+      )}
+
       {/* ── Prompt card ── */}
       <div className="mb-6 rounded-4xl bg-white border border-[#561d11]/10 shadow-[0px_1px_3px_0px_rgba(0,0,0,0.08)] px-5 py-4">
         <p className="font-brand font-medium text-[#561d11] text-[18px] leading-snug">
           {promptText ?? <span className="text-[#561d11]/30">Loading prompt…</span>}
         </p>
       </div>
+
+      {/* ── Audio player ── */}
+      {audioUrl && <AudioPlayer src={audioUrl} />}
 
       {/* ── Mode toggle ── */}
       <div className="mb-6 flex rounded-full bg-[#561d11]/10 p-1">

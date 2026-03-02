@@ -15,6 +15,29 @@ const SUGGESTED_PROMPTS = [
   "Tell me about a tradition your family had.",
 ];
 
+function CameraIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
+      <path
+        d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <circle
+        cx="12"
+        cy="13"
+        r="4"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 export default function OnboardingPage() {
   return (
     <Suspense>
@@ -34,6 +57,8 @@ function OnboardingContent() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [customPrompt, setCustomPrompt] = useState("");
   const [loading, setLoading] = useState(false);
+  const [promptImages, setPromptImages] = useState<Map<string, File>>(new Map());
+  const [imagePreviews, setImagePreviews] = useState<Map<string, string>>(new Map());
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Close language dropdown on outside click
@@ -50,26 +75,68 @@ function OnboardingContent() {
     return () => document.removeEventListener("mousedown", onMouseDown);
   }, []);
 
+  // Revoke all object URLs on unmount
+  useEffect(() => {
+    return () => {
+      imagePreviews.forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  function handlePromptImageChange(promptText: string, file: File) {
+    const oldUrl = imagePreviews.get(promptText);
+    if (oldUrl) URL.revokeObjectURL(oldUrl);
+    const newUrl = URL.createObjectURL(file);
+    setPromptImages((prev) => new Map(prev).set(promptText, file));
+    setImagePreviews((prev) => new Map(prev).set(promptText, newUrl));
+  }
+
   async function saveToDb(userId: string, lang: string, prompts: string[]) {
     await supabase
       .from("users")
       .update({ preferred_language: lang })
       .eq("id", userId);
 
-    if (prompts.length > 0) {
-      await supabase
-        .from("user_prompts")
-        .insert(prompts.map((text) => ({ user_id: userId, custom_text: text })));
-    }
+    if (prompts.length === 0) return;
+
+    const promptRows = await Promise.all(
+      prompts.map(async (text) => {
+        const file = promptImages.get(text);
+        let image_url: string | null = null;
+        if (file) {
+          const ext = file.name.split(".").pop() ?? "jpg";
+          const path = `${userId}/${crypto.randomUUID()}.${ext}`;
+          const { error } = await supabase.storage
+            .from("prompt-images")
+            .upload(path, file, { contentType: file.type });
+          if (!error) {
+            const { data } = supabase.storage
+              .from("prompt-images")
+              .getPublicUrl(path);
+            image_url = data.publicUrl;
+          }
+        }
+        return { user_id: userId, custom_text: text, image_url };
+      })
+    );
+
+    const { error: insertError } = await supabase.from("user_prompts").insert(promptRows);
+    if (insertError) throw insertError;
   }
 
   function togglePrompt(text: string) {
+    const isRemoving = selected.has(text);
     setSelected((prev) => {
       const next = new Set(prev);
       if (next.has(text)) next.delete(text);
       else next.add(text);
       return next;
     });
+    if (isRemoving) {
+      const oldUrl = imagePreviews.get(text);
+      if (oldUrl) URL.revokeObjectURL(oldUrl);
+      setPromptImages((prev) => { const m = new Map(prev); m.delete(text); return m; });
+      setImagePreviews((prev) => { const m = new Map(prev); m.delete(text); return m; });
+    }
   }
 
   function addCustomPrompt() {
@@ -110,7 +177,7 @@ function OnboardingContent() {
         router.push("/dashboard");
       }
     } catch (e: unknown) {
-      toast.error((e as Error)?.message ?? "Something went wrong.");
+      toast.error(e instanceof Error ? e.message : "Something went wrong.");
     } finally {
       setLoading(false);
     }
@@ -152,7 +219,7 @@ function OnboardingContent() {
           <button
             type="button"
             onClick={() => setLangOpen((o) => !o)}
-            className="w-full h-[50px] rounded-[20px] border border-[#561d11]/20 bg-white px-5 flex items-center justify-between font-brand text-base transition focus:outline-none focus:border-[#561d11]/50"
+            className="w-full h-12.5 rounded-4xl border border-[#561d11]/20 bg-white px-5 flex items-center justify-between font-brand text-base transition focus:outline-none focus:border-[#561d11]/50"
           >
             <span
               className={
@@ -183,7 +250,7 @@ function OnboardingContent() {
           </button>
 
           {langOpen && (
-            <div className="absolute left-0 right-0 top-[54px] rounded-[16px] border border-[#561d11]/20 bg-white shadow-lg z-10 overflow-hidden">
+            <div className="absolute left-0 right-0 top-13.5 rounded-3xl border border-[#561d11]/20 bg-white shadow-lg z-10 overflow-hidden">
               {LANGUAGES.map((opt) => (
                 <button
                   key={opt.value}
@@ -228,13 +295,13 @@ function OnboardingContent() {
               }
             }}
             placeholder="Type a question you want to ask..."
-            className="flex-1 h-[50px] rounded-[20px] border border-[#561d11]/20 bg-white px-5 font-brand text-base text-[#561d11] placeholder:text-[#561d11]/40 placeholder:font-medium focus:outline-none focus:border-[#561d11]/50 transition"
+            className="flex-1 h-12.5 rounded-4xl border border-[#561d11]/20 bg-white px-5 font-brand text-base text-[#561d11] placeholder:text-[#561d11]/40 placeholder:font-medium focus:outline-none focus:border-[#561d11]/50 transition"
           />
           {customPrompt.trim() && (
             <button
               type="button"
               onClick={addCustomPrompt}
-              className="h-[50px] px-5 rounded-[20px] bg-[#561d11] text-[#f0eade] font-brand text-sm font-medium transition hover:bg-[#6b2517] active:scale-[0.99]"
+              className="h-12.5 px-5 rounded-4xl bg-[#561d11] text-[#f0eade] font-brand text-sm font-medium transition hover:bg-[#6b2517] active:scale-[0.99]"
             >
               Add
             </button>
@@ -248,47 +315,97 @@ function OnboardingContent() {
           Suggested Prompts
         </p>
         <div className="flex flex-col gap-2">
-          {SUGGESTED_PROMPTS.map((prompt) => {
+          {SUGGESTED_PROMPTS.map((prompt, index) => {
             const isSelected = selected.has(prompt);
+            const preview = imagePreviews.get(prompt);
             return (
-              <button
-                key={prompt}
-                type="button"
-                onClick={() => togglePrompt(prompt)}
-                className={`w-full rounded-[20px] px-5 py-3.5 text-left font-brand text-[18px] font-medium leading-snug transition border ${
-                  isSelected
-                    ? "bg-[#561d11] border-[#561d11] text-[#f0eade]"
-                    : "bg-white border-[#561d11]/20 text-[#561d11] hover:border-[#561d11]/40"
-                }`}
-              >
-                <span className="flex items-start justify-between gap-3">
-                  <span>{prompt}</span>
-                  {isSelected && (
-                    <span className="shrink-0 text-[#f0eade]/70 text-xl leading-snug">
-                      ×
-                    </span>
-                  )}
-                </span>
-              </button>
+              <div key={prompt} className="relative">
+                <button
+                  type="button"
+                  onClick={() => togglePrompt(prompt)}
+                  className={`w-full rounded-4xl px-5 py-3.5 text-left font-brand text-[18px] font-medium leading-snug transition border ${
+                    isSelected
+                      ? "bg-[#561d11] border-[#561d11] text-[#f0eade] pr-12"
+                      : "bg-white border-[#561d11]/20 text-[#561d11] hover:border-[#561d11]/40"
+                  }`}
+                >
+                  {prompt}
+                </button>
+                {isSelected && (
+                  <>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      id={`img-s-${index}`}
+                      className="sr-only"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handlePromptImageChange(prompt, file);
+                      }}
+                    />
+                    <label
+                      htmlFor={`img-s-${index}`}
+                      className="absolute top-2 right-2 z-10 cursor-pointer"
+                    >
+                      {preview ? (
+                        <img
+                          src={preview}
+                          alt="Prompt image"
+                          className="w-8 h-8 rounded-lg object-cover border border-[#f0eade]/40"
+                        />
+                      ) : (
+                        <span className="flex items-center justify-center w-8 h-8 rounded-full bg-[#f0eade]/15 text-[#f0eade]/70 hover:bg-[#f0eade]/25 transition">
+                          <CameraIcon />
+                        </span>
+                      )}
+                    </label>
+                  </>
+                )}
+              </div>
             );
           })}
 
           {/* User-added custom prompts appear here (always selected) */}
-          {customAdded.map((prompt) => (
-            <button
-              key={prompt}
-              type="button"
-              onClick={() => togglePrompt(prompt)}
-              className="w-full rounded-[20px] px-5 py-3.5 text-left font-brand text-[18px] font-medium leading-snug transition border bg-[#561d11] border-[#561d11] text-[#f0eade] hover:bg-[#6b2517]"
-            >
-              <span className="flex items-start justify-between gap-3">
-                <span>{prompt}</span>
-                <span className="shrink-0 text-[#f0eade]/70 text-xl leading-snug">
-                  ×
-                </span>
-              </span>
-            </button>
-          ))}
+          {customAdded.map((prompt, index) => {
+            const preview = imagePreviews.get(prompt);
+            return (
+              <div key={prompt} className="relative">
+                <button
+                  type="button"
+                  onClick={() => togglePrompt(prompt)}
+                  className="w-full rounded-4xl px-5 py-3.5 pr-12 text-left font-brand text-[18px] font-medium leading-snug transition border bg-[#561d11] border-[#561d11] text-[#f0eade] hover:bg-[#6b2517]"
+                >
+                  {prompt}
+                </button>
+                <input
+                  type="file"
+                  accept="image/*"
+                  id={`img-c-${index}`}
+                  className="sr-only"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) handlePromptImageChange(prompt, file);
+                  }}
+                />
+                <label
+                  htmlFor={`img-c-${index}`}
+                  className="absolute top-2 right-2 z-10 cursor-pointer"
+                >
+                  {preview ? (
+                    <img
+                      src={preview}
+                      alt="Prompt image"
+                      className="w-8 h-8 rounded-lg object-cover border border-[#f0eade]/40"
+                    />
+                  ) : (
+                    <span className="flex items-center justify-center w-8 h-8 rounded-full bg-[#f0eade]/15 text-[#f0eade]/70 hover:bg-[#f0eade]/25 transition">
+                      <CameraIcon />
+                    </span>
+                  )}
+                </label>
+              </div>
+            );
+          })}
         </div>
       </div>
 

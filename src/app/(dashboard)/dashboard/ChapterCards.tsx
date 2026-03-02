@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import ShareOverlay, { type ShareData } from "./ShareOverlay";
+import { wordCount, extractTitle, formatDate } from "@/lib/storyUtils";
 
 export type Chapter = {
   id: string; // prompt id
@@ -13,25 +14,6 @@ export type Chapter = {
     updatedAt: string; // ISO string
   };
 };
-
-function wordCount(text: string): number {
-  return text.trim().split(/\s+/).filter(Boolean).length;
-}
-
-function extractTitle(content: string): string {
-  const firstSentence = content.split(/[.!?]/)[0].trim();
-  const words = firstSentence.split(/\s+/);
-  if (words.length <= 6) return firstSentence;
-  return words.slice(0, 5).join(" ") + "…";
-}
-
-function formatDate(iso: string): string {
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  }).format(new Date(iso));
-}
 
 function CalendarIcon() {
   return (

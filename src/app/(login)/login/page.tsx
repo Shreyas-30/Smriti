@@ -13,7 +13,7 @@ import Image from "next/image";
 // ── Schema ────────────────────────────────────────────────────────────────────
 
 const schema = z.object({
-  email: z.string().email("Enter a valid email"),
+  email: z.string().email({ message: "Enter a valid email" }),
   password: z.string().min(1, "Enter your password"),
 });
 type FormValues = z.infer<typeof schema>;
@@ -21,7 +21,7 @@ type FormValues = z.infer<typeof schema>;
 // ── Styles ────────────────────────────────────────────────────────────────────
 
 const inputCls =
-  "w-full h-[50px] rounded-[20px] border border-[#561d11]/30 bg-transparent px-4 " +
+  "w-full h-12.5 rounded-4xl border border-[#561d11]/30 bg-transparent px-4 " +
   "font-brand text-lg text-[#561d11] " +
   "placeholder:text-[#561d11]/45 placeholder:font-medium " +
   "focus:outline-none focus:border-[#561d11]/60 transition";
@@ -100,7 +100,7 @@ function LoginContent() {
       if (error) throw error;
       router.push(next);
     } catch (e: unknown) {
-      toast.error((e as Error)?.message ?? "Login failed");
+      toast.error(e instanceof Error ? e.message : "Login failed");
     } finally {
       setLoading(false);
     }
@@ -110,7 +110,7 @@ function LoginContent() {
     <div className="flex min-h-dvh flex-col bg-[#f0eade] lg:flex-row">
 
       {/* ── Left: form panel ────────────────────────────────────────────── */}
-      <div className="mx-auto flex w-full max-w-sm flex-col justify-center px-6 py-12 lg:mx-0 lg:w-[440px] lg:max-w-none lg:shrink-0 lg:px-14">
+      <div className="mx-auto flex w-full max-w-sm flex-col justify-center px-6 py-12 lg:mx-0 lg:w-110 lg:max-w-none lg:shrink-0 lg:px-14">
 
         {/* Logo */}
         <h1 className="mb-10 text-center font-serif text-[3rem] leading-none tracking-[-0.04em] text-[#4c1815] lg:text-left">
@@ -162,7 +162,7 @@ function LoginContent() {
           <button
             type="submit"
             disabled={loading}
-            className="mx-auto mb-6 flex h-12 w-full max-w-[280px] items-center justify-center rounded-full bg-[#561d11] font-brand text-lg font-medium text-[#f0eade] transition hover:bg-[#6b2517] active:scale-[0.99] disabled:opacity-60"
+            className="mx-auto mb-6 flex h-12 w-full max-w-70 items-center justify-center rounded-full bg-[#561d11] font-brand text-lg font-medium text-[#f0eade] transition hover:bg-[#6b2517] active:scale-[0.99] disabled:opacity-60"
           >
             {loading ? "Signing in…" : "Sign in"}
           </button>

@@ -6,11 +6,9 @@ import FeaturedCard from "./FeaturedCard";
 import ChapterCards, { type Chapter } from "./ChapterCards";
 import PromptCards from "./PromptCards";
 
-// ── Helpers ─────────────────────────────────────────────────────────────────
+import { wordCount } from "@/lib/storyUtils";
 
-function wordCount(text: string): number {
-  return text.trim().split(/\s+/).filter(Boolean).length;
-}
+// ── Helpers ─────────────────────────────────────────────────────────────────
 
 function scheduleUpcoming(prompts: { id: string; custom_text: string }[]) {
   const base = new Date();
