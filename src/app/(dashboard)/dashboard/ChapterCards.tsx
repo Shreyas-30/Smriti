@@ -3,12 +3,14 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import ShareOverlay, { type ShareData } from "./ShareOverlay";
+import DeleteStoryDialog from "./DeleteStoryDialog";
 import { wordCount, extractTitle, formatDate } from "@/lib/storyUtils";
 
 export type Chapter = {
   id: string; // prompt id
   custom_text: string;
   story: {
+    id: string; // story row id
     content: string;
     language: string;
     updatedAt: string; // ISO string
@@ -45,9 +47,23 @@ function ShareIcon() {
   );
 }
 
+function TrashIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="3 6 5 6 21 6" />
+      <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+      <path d="M10 11v6M14 11v6" />
+      <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+    </svg>
+  );
+}
+
+type DeleteTarget = { storyId: string; promptId: string; title: string } | null;
+
 export default function ChapterCards({ chapters }: { chapters: Chapter[] }) {
   const router = useRouter();
   const [shareData, setShareData] = useState<ShareData | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<DeleteTarget>(null);
 
   return (
     <>
@@ -62,22 +78,34 @@ export default function ChapterCards({ chapters }: { chapters: Chapter[] }) {
             onClick={() => router.push(`/record/${chapter.id}`)}
             className="bg-white border border-black/5 rounded-[16px] p-8 text-left hover:shadow-md transition-shadow group flex flex-col cursor-pointer"
           >
-            {/* Word count + share */}
+            {/* Actions row: share + delete / word count */}
             <div className="flex items-center justify-between mb-5">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShareData({
-                    title,
-                    subtitle: `Story · ${wc} words`,
-                    storyUrl: `${window.location.origin}/story/${chapter.id}`,
-                  });
-                }}
-                className="w-7 h-7 flex items-center justify-center rounded-full text-[#561d11]/30 hover:text-[#561d11]/60 hover:bg-[#561d11]/5 transition opacity-0 group-hover:opacity-100"
-                aria-label="Share story"
-              >
-                <ShareIcon />
-              </button>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShareData({
+                      title,
+                      subtitle: `Story · ${wc} words`,
+                      storyUrl: `${window.location.origin}/story/${chapter.id}`,
+                    });
+                  }}
+                  className="w-7 h-7 flex items-center justify-center rounded-full text-[#561d11]/30 hover:text-[#561d11]/60 hover:bg-[#561d11]/5 transition opacity-0 group-hover:opacity-100"
+                  aria-label="Share story"
+                >
+                  <ShareIcon />
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setDeleteTarget({ storyId: chapter.story.id, promptId: chapter.id, title });
+                  }}
+                  className="w-7 h-7 flex items-center justify-center rounded-full text-[#561d11]/30 hover:text-red-500/70 hover:bg-red-50 transition opacity-0 group-hover:opacity-100"
+                  aria-label="Delete story"
+                >
+                  <TrashIcon />
+                </button>
+              </div>
               <span className="font-brand text-[12px] text-[#561d11]/30">{wc} words</span>
             </div>
 
@@ -113,6 +141,15 @@ export default function ChapterCards({ chapters }: { chapters: Chapter[] }) {
 
     {shareData && (
       <ShareOverlay data={shareData} onClose={() => setShareData(null)} />
+    )}
+
+    {deleteTarget && (
+      <DeleteStoryDialog
+        storyId={deleteTarget.storyId}
+        promptId={deleteTarget.promptId}
+        storyTitle={deleteTarget.title}
+        onClose={() => setDeleteTarget(null)}
+      />
     )}
     </>
   );

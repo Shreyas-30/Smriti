@@ -319,20 +319,26 @@ function OnboardingContent() {
             const isSelected = selected.has(prompt);
             const preview = imagePreviews.get(prompt);
             return (
-              <div key={prompt} className="relative">
+              <div
+                key={prompt}
+                className={`rounded-4xl border overflow-hidden transition-colors ${
+                  isSelected
+                    ? "bg-[#561d11] border-[#561d11]"
+                    : "bg-white border-[#561d11]/20 hover:border-[#561d11]/40"
+                }`}
+              >
                 <button
                   type="button"
                   onClick={() => togglePrompt(prompt)}
-                  className={`w-full rounded-4xl px-5 py-3.5 text-left font-brand text-[18px] font-medium leading-snug transition border ${
-                    isSelected
-                      ? "bg-[#561d11] border-[#561d11] text-[#f0eade] pr-12"
-                      : "bg-white border-[#561d11]/20 text-[#561d11] hover:border-[#561d11]/40"
+                  className={`w-full px-5 py-3.5 text-left font-brand text-[18px] font-medium leading-snug transition ${
+                    isSelected ? "text-[#f0eade]" : "text-[#561d11]"
                   }`}
                 >
                   {prompt}
                 </button>
+
                 {isSelected && (
-                  <>
+                  <div className="border-t border-[#f0eade]/15 px-5 py-3">
                     <input
                       type="file"
                       accept="image/*"
@@ -345,21 +351,24 @@ function OnboardingContent() {
                     />
                     <label
                       htmlFor={`img-s-${index}`}
-                      className="absolute top-2 right-2 z-10 cursor-pointer"
+                      className="flex items-center gap-3 cursor-pointer group w-fit"
                     >
                       {preview ? (
                         <img
                           src={preview}
                           alt="Prompt image"
-                          className="w-8 h-8 rounded-lg object-cover border border-[#f0eade]/40"
+                          className="w-10 h-10 rounded-xl object-cover border border-[#f0eade]/30"
                         />
                       ) : (
-                        <span className="flex items-center justify-center w-8 h-8 rounded-full bg-[#f0eade]/15 text-[#f0eade]/70 hover:bg-[#f0eade]/25 transition">
+                        <span className="flex items-center justify-center w-9 h-9 rounded-full bg-[#f0eade]/15 group-hover:bg-[#f0eade]/25 transition text-[#f0eade]/70 shrink-0">
                           <CameraIcon />
                         </span>
                       )}
+                      <span className="font-brand text-sm text-[#f0eade]/60 group-hover:text-[#f0eade]/80 transition">
+                        {preview ? "Change photo" : "Add a photo"}
+                      </span>
                     </label>
-                  </>
+                  </div>
                 )}
               </div>
             );
@@ -369,40 +378,48 @@ function OnboardingContent() {
           {customAdded.map((prompt, index) => {
             const preview = imagePreviews.get(prompt);
             return (
-              <div key={prompt} className="relative">
+              <div
+                key={prompt}
+                className="rounded-4xl border overflow-hidden bg-[#561d11] border-[#561d11]"
+              >
                 <button
                   type="button"
                   onClick={() => togglePrompt(prompt)}
-                  className="w-full rounded-4xl px-5 py-3.5 pr-12 text-left font-brand text-[18px] font-medium leading-snug transition border bg-[#561d11] border-[#561d11] text-[#f0eade] hover:bg-[#6b2517]"
+                  className="w-full px-5 py-3.5 text-left font-brand text-[18px] font-medium leading-snug text-[#f0eade] transition hover:bg-[#6b2517]"
                 >
                   {prompt}
                 </button>
-                <input
-                  type="file"
-                  accept="image/*"
-                  id={`img-c-${index}`}
-                  className="sr-only"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) handlePromptImageChange(prompt, file);
-                  }}
-                />
-                <label
-                  htmlFor={`img-c-${index}`}
-                  className="absolute top-2 right-2 z-10 cursor-pointer"
-                >
-                  {preview ? (
-                    <img
-                      src={preview}
-                      alt="Prompt image"
-                      className="w-8 h-8 rounded-lg object-cover border border-[#f0eade]/40"
-                    />
-                  ) : (
-                    <span className="flex items-center justify-center w-8 h-8 rounded-full bg-[#f0eade]/15 text-[#f0eade]/70 hover:bg-[#f0eade]/25 transition">
-                      <CameraIcon />
+                <div className="border-t border-[#f0eade]/15 px-5 py-3">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    id={`img-c-${index}`}
+                    className="sr-only"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) handlePromptImageChange(prompt, file);
+                    }}
+                  />
+                  <label
+                    htmlFor={`img-c-${index}`}
+                    className="flex items-center gap-3 cursor-pointer group w-fit"
+                  >
+                    {preview ? (
+                      <img
+                        src={preview}
+                        alt="Prompt image"
+                        className="w-10 h-10 rounded-xl object-cover border border-[#f0eade]/30"
+                      />
+                    ) : (
+                      <span className="flex items-center justify-center w-9 h-9 rounded-full bg-[#f0eade]/15 group-hover:bg-[#f0eade]/25 transition text-[#f0eade]/70 shrink-0">
+                        <CameraIcon />
+                      </span>
+                    )}
+                    <span className="font-brand text-sm text-[#f0eade]/60 group-hover:text-[#f0eade]/80 transition">
+                      {preview ? "Change photo" : "Add a photo"}
                     </span>
-                  )}
-                </label>
+                  </label>
+                </div>
               </div>
             );
           })}

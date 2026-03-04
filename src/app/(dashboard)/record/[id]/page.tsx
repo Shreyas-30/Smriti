@@ -488,13 +488,14 @@ export default function RecordPage() {
 
       {/* ── Prompt image ── */}
       {imageUrl && (
-        <div className="relative w-full h-52 rounded-3xl overflow-hidden mb-4">
+        <div className="mb-4 rounded-3xl overflow-hidden bg-[#561d11]/5">
           <Image
             src={imageUrl}
             alt="Prompt image"
-            fill
-            className="object-cover"
-            sizes="(max-width: 640px) 100vw, 600px"
+            width={0}
+            height={0}
+            sizes="100vw"
+            className="w-full h-auto max-h-72 object-contain"
           />
         </div>
       )}
@@ -632,9 +633,14 @@ export default function RecordPage() {
           </button>
         )}
 
-        <button className="text-center font-brand text-sm text-[#561d11]/40 underline underline-offset-4 transition hover:text-[#561d11]/60 py-1">
-          Learn how it works
-        </button>
+        <a
+          href="https://www.smritistories.com/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-center font-brand text-sm text-[#561d11]/40 underline underline-offset-4 transition hover:text-[#561d11]/60 py-1"
+        >
+          Learn how this works
+        </a>
       </div>
 
       {/* ── Footer ── */}

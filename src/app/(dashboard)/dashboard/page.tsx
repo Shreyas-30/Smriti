@@ -58,7 +58,7 @@ export default async function DashboardPage() {
       chapters.push({
         id: p.id,
         custom_text: p.custom_text,
-        story: { content: story.content, language: story.language, updatedAt: story.updatedAt },
+        story: { id: story.id, content: story.content, language: story.language, updatedAt: story.updatedAt },
       });
     } else {
       promptsWithoutStory.push(p);
