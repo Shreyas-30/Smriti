@@ -35,16 +35,16 @@ export default async function DashboardPage() {
       .order("created_at"),
     supabase
       .from("user_stories")
-      .select("id, prompt_id, content, language, updated_at")
+      .select("id, prompt_id, content, language, updated_at, title")
       .eq("user_id", user!.id),
   ]);
 
   // Build lookup: promptId → story
-  type StoryRow = { id: string; content: string; language: string; updatedAt: string };
+  type StoryRow = { id: string; content: string; language: string; updatedAt: string; title: string | null };
   const storyMap = new Map<string, StoryRow>(
     (rawStories ?? []).map((s) => [
       s.prompt_id,
-      { id: s.id, content: s.content, language: s.language, updatedAt: s.updated_at },
+      { id: s.id, content: s.content, language: s.language, updatedAt: s.updated_at, title: s.title ?? null },
     ])
   );
 
@@ -58,7 +58,7 @@ export default async function DashboardPage() {
       chapters.push({
         id: p.id,
         custom_text: p.custom_text,
-        story: { id: story.id, content: story.content, language: story.language, updatedAt: story.updatedAt },
+        story: { id: story.id, content: story.content, language: story.language, updatedAt: story.updatedAt, title: story.title },
       });
     } else {
       promptsWithoutStory.push(p);

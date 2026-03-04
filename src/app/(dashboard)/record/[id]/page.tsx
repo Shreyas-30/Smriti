@@ -137,6 +137,7 @@ export default function RecordPage() {
   const [recordingState, setRecordingState] = useState<RecordingState>("idle");
   const [seconds, setSeconds] = useState(0);
   const [storyText, setStoryText] = useState("");
+  const [storyTitle, setStoryTitle] = useState("");
   const [saving, setSaving] = useState(false);
 
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -158,7 +159,7 @@ export default function RecordPage() {
           supabase.from("user_prompts").select("custom_text, image_url").eq("id", id).single(),
           supabase
             .from("user_stories")
-            .select("id, content, language, audio_url")
+            .select("id, content, language, audio_url, title")
             .eq("prompt_id", id)
             .maybeSingle(),
         ]);
@@ -175,6 +176,7 @@ export default function RecordPage() {
       if (story) {
         setExistingStoryId(story.id);
         setStoryText(story.content);
+        setStoryTitle(story.title ?? "");
         setLanguage(story.language);
         setAudioUrl(story.audio_url ?? null);
         setInputMode("text");
@@ -381,6 +383,7 @@ export default function RecordPage() {
           ...(existingStoryId ? { id: existingStoryId } : {}),
           user_id: user.id,
           prompt_id: id,
+          title: storyTitle.trim() || null,
           content: storyText.trim(),
           language,
           ...(audioUrl ? { audio_url: audioUrl } : {}),
@@ -509,6 +512,20 @@ export default function RecordPage() {
 
       {/* ── Audio player ── */}
       {audioUrl && <AudioPlayer src={audioUrl} />}
+
+      {/* ── Story title ── */}
+      <div className="mb-6">
+        <p className="mb-2 font-brand font-bold text-sm text-[#561d11]">
+          Story title
+        </p>
+        <input
+          type="text"
+          value={storyTitle}
+          onChange={(e) => setStoryTitle(e.target.value)}
+          placeholder="Give your story a title…"
+          className="w-full h-12 rounded-4xl border border-[#561d11]/20 bg-white px-5 font-brand text-base text-[#561d11] placeholder:text-[#561d11]/35 focus:outline-none focus:border-[#561d11]/50 transition"
+        />
+      </div>
 
       {/* ── Mode toggle ── */}
       <div className="mb-6 flex rounded-full bg-[#561d11]/10 p-1">

@@ -72,7 +72,7 @@ export default function FeaturedCard({ chapter }: { chapter: Chapter }) {
   const [showShare, setShowShare] = useState(false);
   const [showDelete, setShowDelete] = useState(false);
   const wc = wordCount(chapter.story.content);
-  const title = extractTitle(chapter.story.content);
+  const title = chapter.story.title || extractTitle(chapter.story.content);
 
   return (
     <>

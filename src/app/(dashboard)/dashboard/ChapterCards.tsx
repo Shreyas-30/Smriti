@@ -14,6 +14,7 @@ export type Chapter = {
     content: string;
     language: string;
     updatedAt: string; // ISO string
+    title: string | null;
   };
 };
 
@@ -70,7 +71,7 @@ export default function ChapterCards({ chapters }: { chapters: Chapter[] }) {
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
       {chapters.map((chapter) => {
         const wc = wordCount(chapter.story.content);
-        const title = extractTitle(chapter.story.content);
+        const title = chapter.story.title || extractTitle(chapter.story.content);
 
         return (
           <div
