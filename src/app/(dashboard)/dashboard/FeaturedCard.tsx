@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { Chapter } from "./ChapterCards";
 import ShareOverlay from "./ShareOverlay";
+import DeleteStoryDialog from "./DeleteStoryDialog";
 import { wordCount, extractTitle, formatDate } from "@/lib/storyUtils";
 
 function CalendarIcon() {
@@ -46,6 +47,17 @@ function EditIcon() {
   );
 }
 
+function TrashIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="3 6 5 6 21 6" />
+      <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+      <path d="M10 11v6M14 11v6" />
+      <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+    </svg>
+  );
+}
+
 function BookOpenDecorIcon() {
   return (
     <svg width="96" height="96" viewBox="0 0 24 24" fill="none" stroke="rgba(240,234,222,0.25)" strokeWidth="0.75" strokeLinecap="round" strokeLinejoin="round">
@@ -58,6 +70,7 @@ function BookOpenDecorIcon() {
 export default function FeaturedCard({ chapter }: { chapter: Chapter }) {
   const router = useRouter();
   const [showShare, setShowShare] = useState(false);
+  const [showDelete, setShowDelete] = useState(false);
   const wc = wordCount(chapter.story.content);
   const title = extractTitle(chapter.story.content);
 
@@ -93,7 +106,7 @@ export default function FeaturedCard({ chapter }: { chapter: Chapter }) {
           </div>
 
           {/* Actions */}
-          <div className="flex gap-3">
+          <div className="flex gap-3 flex-wrap">
             <button
               onClick={() => setShowShare(true)}
               className="flex items-center gap-2 px-5 h-10 rounded-full bg-[#f0eade] font-brand text-[14px] font-medium text-[#561d11] hover:bg-[#e5ddd0] transition active:scale-[0.98]"
@@ -107,6 +120,13 @@ export default function FeaturedCard({ chapter }: { chapter: Chapter }) {
             >
               <EditIcon />
               Continue Writing
+            </button>
+            <button
+              onClick={() => setShowDelete(true)}
+              className="flex items-center gap-2 px-4 h-10 rounded-full border border-[#561d11]/15 font-brand text-[14px] font-medium text-[#561d11]/50 hover:text-red-500 hover:border-red-200 hover:bg-red-50 transition active:scale-[0.98]"
+              aria-label="Delete story"
+            >
+              <TrashIcon />
             </button>
           </div>
         </div>
@@ -126,6 +146,15 @@ export default function FeaturedCard({ chapter }: { chapter: Chapter }) {
           storyUrl: `${window.location.origin}/story/${chapter.id}`,
         }}
         onClose={() => setShowShare(false)}
+      />
+    )}
+
+    {showDelete && (
+      <DeleteStoryDialog
+        storyId={chapter.story.id}
+        promptId={chapter.id}
+        storyTitle={title}
+        onClose={() => setShowDelete(false)}
       />
     )}
     </>
