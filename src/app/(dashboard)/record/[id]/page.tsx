@@ -37,7 +37,7 @@ function formatTime(s: number): string {
   return `${m}:${sec}`;
 }
 
-function AudioPlayer({ src }: { src: string }) {
+function AudioPlayer({ src, label = "Your recording" }: { src: string; label?: string }) {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -71,7 +71,7 @@ function AudioPlayer({ src }: { src: string }) {
   return (
     <div className="mb-6 rounded-4xl bg-white border border-[#561d11]/10 shadow-[0px_1px_3px_0px_rgba(0,0,0,0.08)] px-5 py-4">
       <p className="font-brand text-xs font-medium text-[#561d11]/45 mb-3 uppercase tracking-wide">
-        Your recording
+        {label}
       </p>
       <audio
         ref={audioRef}
@@ -139,6 +139,9 @@ export default function RecordPage() {
   const [storyText, setStoryText] = useState("");
   const [storyTitle, setStoryTitle] = useState("");
   const [saving, setSaving] = useState(false);
+  const [showResumeDialog, setShowResumeDialog] = useState(false);
+  const [showRecordingNotice, setShowRecordingNotice] = useState(false);
+  const [prevAudioUrl, setPrevAudioUrl] = useState<string | null>(null);
 
   const dropdownRef = useRef<HTMLDivElement>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -146,6 +149,7 @@ export default function RecordPage() {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const streamRef = useRef<MediaStream | null>(null);
+  const appendModeRef = useRef(false);
 
   const LANG_TO_SARVAM: Record<string, string> = {
     en: "en-IN", hi: "hi-IN", mr: "mr-IN", gu: "gu-IN", ta: "ta-IN",
@@ -223,8 +227,10 @@ export default function RecordPage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
       const ext = blob.type.includes("webm") ? "webm" : "ogg";
-      // One file per user+prompt, overwrite on re-record
-      const path = `${user.id}/${id}.${ext}`;
+      // Append mode: save new recording alongside the previous one
+      const path = appendModeRef.current
+        ? `${user.id}/${id}_${Date.now()}.${ext}`
+        : `${user.id}/${id}.${ext}`;
       const { error } = await supabase.storage
         .from(AUDIO_BUCKET)
         .upload(path, blob, { contentType: blob.type, upsert: true });
@@ -237,12 +243,34 @@ export default function RecordPage() {
     }
   }
 
-  async function handleStartRecording() {
+  function handleStartRecordingClick() {
     if (!language) {
       toast.error("Please select a language first.");
       return;
     }
+    if (storyText.trim() && existingStoryId) {
+      setShowResumeDialog(true);
+    } else {
+      setShowRecordingNotice(true);
+    }
+  }
 
+  function handleResumeChoice(choice: "resume" | "startOver") {
+    setShowResumeDialog(false);
+    if (choice === "resume") {
+      appendModeRef.current = true;
+      setPrevAudioUrl(audioUrl);
+      setShowRecordingNotice(true);
+    } else {
+      appendModeRef.current = false;
+      setPrevAudioUrl(null);
+      setStoryText("");
+      setAudioUrl(null);
+      setShowRecordingNotice(true);
+    }
+  }
+
+  async function handleStartRecording() {
     let stream: MediaStream;
     try {
       stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -284,7 +312,12 @@ export default function RecordPage() {
 
         if (data.transcript) {
           stopPolling();
-          setStoryText(data.transcript);
+          if (appendModeRef.current) {
+            setStoryText((prev) => prev.trim() ? prev.trim() + "\n\n" + data.transcript : data.transcript);
+            appendModeRef.current = false;
+          } else {
+            setStoryText(data.transcript);
+          }
           setInputMode("text");
           setRecordingState("done");
         } else if (data.error || !res.ok) {
@@ -354,6 +387,8 @@ export default function RecordPage() {
     streamRef.current = null;
     audioChunksRef.current = [];
     mediaRecorderRef.current = null;
+    appendModeRef.current = false;
+    setPrevAudioUrl(null);
     setInputMode(mode);
     setRecordingState("idle");
     setSeconds(0);
@@ -510,8 +545,9 @@ export default function RecordPage() {
         </p>
       </div>
 
-      {/* ── Audio player ── */}
-      {audioUrl && <AudioPlayer src={audioUrl} />}
+      {/* ── Audio player(s) ── */}
+      {prevAudioUrl && <AudioPlayer src={prevAudioUrl} label="Previous recording" />}
+      {audioUrl && <AudioPlayer src={audioUrl} label={prevAudioUrl ? "New recording" : "Your recording"} />}
 
       {/* ── Story title ── */}
       <div className="mb-6">
@@ -528,7 +564,7 @@ export default function RecordPage() {
       </div>
 
       {/* ── Mode toggle ── */}
-      <div className="mb-6 flex rounded-full bg-[#561d11]/10 p-1">
+      <div className="mb-2 flex rounded-full bg-[#561d11]/10 p-1">
         <button
           type="button"
           onClick={() => handleModeSwitch("voice")}
@@ -558,9 +594,14 @@ export default function RecordPage() {
         </button>
       </div>
 
+      {inputMode === "voice" && (
+        <p className="mb-6 text-center font-brand text-xs text-[#561d11]/40">
+          Voice recording supports up to 20 minutes
+        </p>
+      )}
       {/* ── Text input (write mode) ── */}
       {inputMode === "text" && (
-        <div className="mb-6">
+        <div className="mt-4 mb-6">
           <textarea
             value={storyText}
             onChange={(e) => setStoryText(e.target.value)}
@@ -612,7 +653,7 @@ export default function RecordPage() {
         {/* Voice mode */}
         {inputMode === "voice" && recordingState === "idle" && (
           <button
-            onClick={handleStartRecording}
+            onClick={handleStartRecordingClick}
             className="w-full h-14 rounded-full bg-[#561d11] font-brand text-lg font-medium text-[#f0eade] transition hover:bg-[#6b2517] active:scale-[0.99] flex items-center justify-center gap-3"
           >
             <MicIcon className="text-[#f0eade]" />
@@ -664,6 +705,67 @@ export default function RecordPage() {
       <p className="mt-8 text-center font-brand text-xs text-[#561d11]/40">
         Powered by Smriti
       </p>
+
+      {/* ── Resume / Start Over dialog ── */}
+      {showResumeDialog && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/30 px-4 pb-6 sm:pb-0">
+          <div className="w-full max-w-sm rounded-4xl bg-[#f0eade] border border-[#561d11]/15 shadow-xl px-6 py-7 flex flex-col gap-4">
+            <div>
+              <p className="font-brand font-bold text-lg text-[#4c1815] mb-1">
+                You already have a recording
+              </p>
+              <p className="font-brand text-sm text-[#561d11]/65 leading-relaxed">
+                Would you like to keep your existing story or record a new one from scratch?
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => handleResumeChoice("resume")}
+              className="w-full h-12 rounded-full bg-[#561d11] font-brand text-base font-medium text-[#f0eade] transition hover:bg-[#6b2517] active:scale-[0.99]"
+            >
+              Keep existing and continue
+            </button>
+            <button
+              type="button"
+              onClick={() => handleResumeChoice("startOver")}
+              className="w-full h-12 rounded-full border border-[#561d11]/25 font-brand text-base font-medium text-[#561d11] transition hover:bg-[#561d11]/5 active:scale-[0.99]"
+            >
+              Start over
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── Recording notice (20-min limit) ── */}
+      {showRecordingNotice && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/30 px-4 pb-6 sm:pb-0">
+          <div className="w-full max-w-sm rounded-4xl bg-[#f0eade] border border-[#561d11]/15 shadow-xl px-6 py-7 flex flex-col gap-4">
+            <div>
+              <p className="font-brand font-bold text-lg text-[#4c1815] mb-1">
+                Before you start
+              </p>
+              <p className="font-brand text-sm text-[#561d11]/65 leading-relaxed">
+                Voice recording supports up to <span className="font-semibold text-[#561d11]">20 minutes</span>. Find a quiet spot and speak naturally — you can always edit the transcript after.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => { setShowRecordingNotice(false); void handleStartRecording(); }}
+              className="w-full h-12 rounded-full bg-[#561d11] font-brand text-base font-medium text-[#f0eade] transition hover:bg-[#6b2517] active:scale-[0.99] flex items-center justify-center gap-2"
+            >
+              <MicIcon className="w-4 h-4 text-[#f0eade]" />
+              Got it, start recording
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowRecordingNotice(false)}
+              className="w-full h-10 font-brand text-sm text-[#561d11]/50 transition hover:text-[#561d11]/80"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
