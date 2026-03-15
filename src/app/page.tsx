@@ -332,10 +332,10 @@ function StoryAudioPlayer({ src }: { src: string }) {
         inputRef.current.style.background = `linear-gradient(to right, #3d1a0e 0%, rgba(61,26,14,0.18) 0%)`;
       }
       if (timeRef.current) timeRef.current.textContent = `00:00 / ${fmt(el?.duration ?? 0)}`;
-      el.currentTime = 0;
+      if (el) el.currentTime = 0;
     }
     function onDuration() {
-      const dur = el.duration;
+      const dur = el?.duration ?? 0;
       if (!isFinite(dur)) return;
       setDuration(dur);
       if (inputRef.current) inputRef.current.max = String(dur);
