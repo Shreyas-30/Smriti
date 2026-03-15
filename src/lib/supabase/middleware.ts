@@ -1,9 +1,47 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
+import { getIronSession } from "iron-session";
+import type { AdminSession } from "@/lib/admin-session";
 
 const PROTECTED_PREFIXES = ["/dashboard", "/elders", "/stories", "/projects"];
 
+const ADMIN_SESSION_OPTS = {
+  cookieName: "smriti_admin_session",
+  password: process.env.ADMIN_SESSION_PASSWORD ?? "fallback-not-used",
+  cookieOptions: {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+  },
+} as const;
+
 export async function updateSession(request: NextRequest) {
+  const pathname = request.nextUrl.pathname;
+
+  // ── Admin routes ──────────────────────────────────────────────────────────
+  if (pathname.startsWith("/admin")) {
+    const tmpRes = new Response();
+    const session = await getIronSession<AdminSession>(
+      request,
+      tmpRes,
+      ADMIN_SESSION_OPTS,
+    );
+    const isAdmin = session.isAdmin === true;
+
+    if (pathname === "/admin/login") {
+      if (isAdmin) {
+        return NextResponse.redirect(new URL("/admin", request.url));
+      }
+      return NextResponse.next({ request });
+    }
+
+    if (!isAdmin) {
+      return NextResponse.redirect(new URL("/admin/login", request.url));
+    }
+
+    return NextResponse.next({ request });
+  }
+
+  // ── Supabase / user routes ────────────────────────────────────────────────
   let response = NextResponse.next({ request });
 
   const supabase = createServerClient(
@@ -35,7 +73,6 @@ export async function updateSession(request: NextRequest) {
     await supabase.auth.signOut({ scope: "local" });
   }
 
-  const pathname = request.nextUrl.pathname;
   const isProtected = PROTECTED_PREFIXES.some((p) => pathname.startsWith(p));
   const isAuthRoute =
     pathname.startsWith("/login") || pathname.startsWith("/signup");
