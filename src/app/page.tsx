@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 
 const NOISE_URL = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`;
 
@@ -255,6 +255,177 @@ const FAQS = [
   },
 ];
 
+// Photos used in the Section 2 collage (left column)
+const STORY_PHOTOS = [
+  {
+    src: "/landing/photo-11.png",
+    ar: "1448/976",
+    style: { top: "0%", left: "4%", width: "74%" },
+    rotate: -4,
+    z: 1,
+  },
+  {
+    src: "/landing/photo-2.png",
+    ar: "628/944",
+    style: { top: "22%", left: "0%", width: "56%" },
+    rotate: 3,
+    z: 2,
+  },
+  {
+    src: "/landing/photo-5.png",
+    ar: "648/472",
+    style: { bottom: "0%", left: "18%", width: "74%" },
+    rotate: -2,
+    z: 3,
+  },
+] as const;
+
+function StoryAudioPlayer({ src }: { src: string }) {
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const timeRef = useRef<HTMLSpanElement>(null);
+  const rafRef = useRef<number>(0);
+  const [playing, setPlaying] = useState(false);
+  const [duration, setDuration] = useState(0);
+
+  function fmt(s: number) {
+    if (!isFinite(s) || isNaN(s)) return "0:00";
+    const m = Math.floor(s / 60).toString().padStart(2, "0");
+    const sec = Math.floor(s % 60).toString().padStart(2, "0");
+    return `${m}:${sec}`;
+  }
+
+  // Update the slider and timestamp directly via DOM — no React re-render per frame
+  function tick() {
+    const el = audioRef.current;
+    if (!el) return;
+    const cur = el.currentTime;
+    const dur = el.duration || 0;
+    const pct = dur > 0 ? (cur / dur) * 100 : 0;
+    if (inputRef.current) {
+      inputRef.current.value = String(cur);
+      inputRef.current.style.background = `linear-gradient(to right, #3d1a0e ${pct}%, rgba(61,26,14,0.18) ${pct}%)`;
+    }
+    if (timeRef.current) {
+      timeRef.current.textContent = `${fmt(cur)} / ${fmt(dur)}`;
+    }
+    rafRef.current = requestAnimationFrame(tick);
+  }
+
+  useEffect(() => {
+    const el = audioRef.current;
+    if (!el) return;
+
+    function onPlay() {
+      setPlaying(true);
+      rafRef.current = requestAnimationFrame(tick);
+    }
+    function onPause() {
+      setPlaying(false);
+      cancelAnimationFrame(rafRef.current);
+    }
+    function onEnded() {
+      setPlaying(false);
+      cancelAnimationFrame(rafRef.current);
+      if (inputRef.current) {
+        inputRef.current.value = "0";
+        inputRef.current.style.background = `linear-gradient(to right, #3d1a0e 0%, rgba(61,26,14,0.18) 0%)`;
+      }
+      if (timeRef.current) timeRef.current.textContent = `00:00 / ${fmt(el.duration)}`;
+      el.currentTime = 0;
+    }
+    function onDuration() {
+      const dur = el.duration;
+      if (!isFinite(dur)) return;
+      setDuration(dur);
+      if (inputRef.current) inputRef.current.max = String(dur);
+      if (timeRef.current) timeRef.current.textContent = `00:00 / ${fmt(dur)}`;
+    }
+
+    el.addEventListener("play", onPlay);
+    el.addEventListener("pause", onPause);
+    el.addEventListener("ended", onEnded);
+    el.addEventListener("loadedmetadata", onDuration);
+    el.addEventListener("durationchange", onDuration);
+
+    return () => {
+      cancelAnimationFrame(rafRef.current);
+      el.removeEventListener("play", onPlay);
+      el.removeEventListener("pause", onPause);
+      el.removeEventListener("ended", onEnded);
+      el.removeEventListener("loadedmetadata", onDuration);
+      el.removeEventListener("durationchange", onDuration);
+    };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  function togglePlay() {
+    const el = audioRef.current;
+    if (!el) return;
+    if (playing) el.pause(); else void el.play();
+  }
+
+  function handleSeek(e: React.ChangeEvent<HTMLInputElement>) {
+    if (audioRef.current) audioRef.current.currentTime = Number(e.target.value);
+  }
+
+  const THUMB =
+    "[&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3.5 [&::-webkit-slider-thumb]:h-3.5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[#3d1a0e] [&::-webkit-slider-thumb]:cursor-pointer [&::-moz-range-thumb]:w-3.5 [&::-moz-range-thumb]:h-3.5 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-[#3d1a0e] [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:cursor-pointer";
+
+  return (
+    <div
+      className="flex items-center gap-4 px-5 py-3 rounded-lg"
+      style={{ backgroundColor: "rgba(255,255,255,0.7)" }}
+    >
+      <audio ref={audioRef} src={src} preload="metadata" />
+
+      <button
+        onClick={togglePlay}
+        className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 transition-opacity hover:opacity-80"
+        style={{ backgroundColor: "#3d1a0e" }}
+        aria-label={playing ? "Pause" : "Play"}
+      >
+        {playing ? (
+          <svg width="10" height="12" viewBox="0 0 10 12" fill="#f2ede4">
+            <rect x="0" y="0" width="3.5" height="12" rx="1" />
+            <rect x="6.5" y="0" width="3.5" height="12" rx="1" />
+          </svg>
+        ) : (
+          <svg width="11" height="13" viewBox="0 0 11 13" fill="#f2ede4">
+            <path d="M1 0.5L10.5 6.5L1 12.5V0.5Z" />
+          </svg>
+        )}
+      </button>
+
+      {/* Uncontrolled input — DOM updated directly by rAF, React never touches value */}
+      <input
+        ref={inputRef}
+        type="range"
+        min={0}
+        max={duration || 100}
+        step={0.01}
+        defaultValue={0}
+        onChange={handleSeek}
+        disabled={duration === 0}
+        className={`flex-1 h-1.5 appearance-none rounded-full cursor-pointer ${THUMB}`}
+        style={{ background: `linear-gradient(to right, #3d1a0e 0%, rgba(61,26,14,0.18) 0%)` }}
+      />
+
+      <span
+        ref={timeRef}
+        className="text-sm shrink-0 tabular-nums"
+        style={{
+          fontFamily: "var(--font-instrument-sans)",
+          color: "rgba(92,42,24,0.6)",
+          minWidth: "5.5rem",
+          textAlign: "right",
+        }}
+      >
+        00:00 / —:——
+      </span>
+    </div>
+  );
+}
+
 function FAQItem({ q, a }: { q: string; a: string }) {
   const [open, setOpen] = useState(false);
   return (
@@ -365,7 +536,7 @@ export default function HomePage() {
         {/* ── Mobile photo collage ── */}
         <div
           className="relative w-full md:hidden"
-          style={{ paddingBottom: "85%" }}
+          style={{ paddingTop: "48px", paddingBottom: "85%" }}
         >
           {MOBILE_PHOTOS.map(({ id, src, style, rotate, z }) => (
             <div
@@ -424,7 +595,7 @@ export default function HomePage() {
 
           <div className="flex flex-col items-center gap-4 mt-4 w-full max-w-sm">
             <Link
-              href="/signup"
+              href="/pilot-program"
               className="w-full py-4 rounded-full text-center text-white font-medium transition-opacity duration-200 hover:opacity-90"
               style={{
                 backgroundColor: "#3d1a0e",
@@ -434,25 +605,15 @@ export default function HomePage() {
             >
               Get started
             </Link>
-            <Link
-              href="/login"
-              className="text-[#5c2a18] underline underline-offset-4 decoration-[#5c2a18]/50 hover:decoration-[#5c2a18] transition-[text-decoration-color] duration-200"
-              style={{
-                fontFamily: "var(--font-instrument-sans)",
-                fontSize: "clamp(14px, 1.1vw, 16px)",
-              }}
-            >
-              Already have an account? Sign In!
-            </Link>
           </div>
         </div>
       </section>
 
       {/* ══════════════════════════════════════════════════════════════════════
-          SECTION 2 — Story example
+          SECTION 2 — Story example (two-column)
           ══════════════════════════════════════════════════════════════════════ */}
       <section
-        className="paper-texture relative py-20 md:py-28 px-6"
+        className="paper-texture relative py-20 md:py-28 px-6 overflow-hidden"
         style={{ backgroundColor: "#f2ede4" }}
       >
         <div
@@ -465,77 +626,85 @@ export default function HomePage() {
             mixBlendMode: "multiply",
           }}
         />
-        <div className="relative max-w-5xl mx-auto">
-          {/* Opening line — italic, wide */}
-          <p
-            className="text-[#3d1a0e] leading-snug"
-            style={{
-              fontFamily: "var(--font-instrument-serif)",
-              fontSize: "clamp(22px, 2.4vw, 34px)",
-              fontStyle: "italic",
-            }}
-          >
-            {STORY_TEXT[0]}
-          </p>
 
-          {/* Audio player — full width, right under opening line */}
-          <div
-            className="mt-6 flex items-center gap-4 px-5 py-3 rounded-lg w-full"
-            style={{ backgroundColor: "rgba(255,255,255,0.6)" }}
-          >
-            <button
-              className="w-10 h-10 rounded-full flex items-center justify-center shrink-0"
-              style={{ backgroundColor: "#3d1a0e" }}
-              aria-label="Play audio"
+        <div className="relative max-w-6xl mx-auto">
+          <div className="flex flex-col md:flex-row md:items-start gap-12 md:gap-16">
+
+            {/* ── Left: stacked photo collage ── */}
+            <div
+              className="shrink-0 w-full md:w-[44%] relative"
+              style={{ height: "clamp(360px, 55vw, 660px)" }}
             >
-              <svg
-                width="14"
-                height="16"
-                viewBox="0 0 14 16"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path d="M2 1L13 8L2 15V1Z" fill="#f2ede4" />
-              </svg>
-            </button>
-            <div className="flex-1">
-              <div className="h-1.5 bg-[#3d1a0e]/20 rounded-full overflow-hidden">
-                <div className="h-full w-0 bg-[#3d1a0e] rounded-full" />
-              </div>
+              {STORY_PHOTOS.map(({ src, ar, style, rotate, z }, i) => (
+                <div
+                  key={i}
+                  className="photo-card absolute overflow-hidden shadow-md"
+                  style={{
+                    "--base-transform": `rotate(${rotate}deg)`,
+                    ...style,
+                    aspectRatio: ar,
+                    zIndex: z,
+                    borderRadius: "6px",
+                  } as React.CSSProperties}
+                >
+                  <Image
+                    src={src}
+                    alt="Family photo"
+                    fill
+                    unoptimized
+                    className="object-cover"
+                  />
+                  <div
+                    className="photo-grain absolute inset-0 pointer-events-none"
+                    style={{
+                      backgroundImage: GRAIN_URL,
+                      backgroundSize: "200px 200px",
+                      mixBlendMode: "multiply",
+                    }}
+                  />
+                </div>
+              ))}
             </div>
-            <span
-              className="text-[#5c2a18]/60 text-sm shrink-0"
-              style={{ fontFamily: "var(--font-instrument-sans)" }}
-            >
-              0:00 / 1:34
-            </span>
-          </div>
 
-          {/* Body paragraphs — Instrument Sans */}
-          <div className="space-y-6 mt-10">
-            {STORY_TEXT.slice(1).map((paragraph, i) => (
+            {/* ── Right: attribution + audio + story ── */}
+            <div className="flex-1 min-w-0">
+              {/* Attribution — large italic serif at top */}
               <p
-                key={i}
-                className="text-[#3d1a0e] leading-relaxed"
+                className="text-[#3d1a0e] leading-snug mb-7"
                 style={{
-                  fontFamily: "var(--font-instrument-sans)",
-                  fontSize: "clamp(15px, 1.3vw, 19px)",
+                  fontFamily: "var(--font-instrument-serif)",
+                  fontSize: "clamp(20px, 2vw, 30px)",
+                  fontStyle: "italic",
                 }}
               >
-                {paragraph}
+                A glimpse of the kind of story your family could have, like
+                Binod and Shraddha&apos;s, collected through guided prompts and
+                turned into a keepsake book.
               </p>
-            ))}
-          </div>
 
-          {/* Attribution */}
-          <p
-            className="mt-10 text-[#5c2a18]/70 text-sm sm:text-base leading-relaxed"
-            style={{ fontFamily: "var(--font-instrument-sans)" }}
-          >
-            A glimpse of the kind of story your family could have, like Binod
-            and Shraddha&apos;s, collected through guided prompts and turned
-            into a keepsake book.
-          </p>
+              {/* Functional audio player */}
+              <div className="mb-8">
+                <StoryAudioPlayer src="/landing/story.mp3" />
+              </div>
+
+              {/* Story paragraphs */}
+              <div className="space-y-5">
+                {STORY_TEXT.map((paragraph, i) => (
+                  <p
+                    key={i}
+                    className="text-[#3d1a0e] leading-relaxed"
+                    style={{
+                      fontFamily: "var(--font-instrument-sans)",
+                      fontSize: "clamp(15px, 1.2vw, 18px)",
+                    }}
+                  >
+                    {paragraph}
+                  </p>
+                ))}
+              </div>
+            </div>
+
+          </div>
         </div>
       </section>
 
@@ -557,29 +726,46 @@ export default function HomePage() {
             mixBlendMode: "multiply",
           }}
         />
-        <div className="relative max-w-4xl mx-auto">
+        <div className="relative max-w-5xl mx-auto">
           <h2
-            className="text-[#3d1a0e] text-center mb-16"
+            className="text-[#3d1a0e] mb-14"
             style={{
               fontFamily: "var(--font-instrument-serif)",
               fontSize: "clamp(32px, 4vw, 52px)",
+              fontStyle: "italic",
             }}
           >
             How does it work?
           </h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-10 md:gap-14">
-            {STEPS.map(({ step, text }) => (
-              <div
-                key={step}
-                className="flex flex-col items-center text-center gap-4"
-              >
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-12 md:gap-10">
+            {STEPS.map(({ step, text }, i) => (
+              <div key={step} className="flex flex-col gap-6">
+                {/* Step image — natural aspect ratio, no crop */}
+                <Image
+                  src={`/landing/step_${i + 1}.png`}
+                  alt={step}
+                  width={400}
+                  height={866}
+                  unoptimized
+                  className="w-full h-auto max-w-[260px] md:max-w-none mx-auto md:mx-0"
+                  style={{ borderRadius: "46px" }}
+                />
+
+                {/* Step label — italic serif with underline */}
                 <span
-                  className="text-[#5c2a18] font-semibold tracking-wide uppercase text-sm"
-                  style={{ fontFamily: "var(--font-instrument-sans)" }}
+                  className="text-[#3d1a0e]"
+                  style={{
+                    fontFamily: "var(--font-instrument-serif)",
+                    fontSize: "clamp(22px, 2vw, 30px)",
+                    fontStyle: "italic",
+                    textDecoration: "underline",
+                    textUnderlineOffset: "5px",
+                  }}
                 >
                   {step}
                 </span>
+
                 <p
                   className="text-[#3d1a0e] leading-relaxed"
                   style={{
@@ -660,7 +846,7 @@ export default function HomePage() {
           </h2>
           <div className="flex flex-col items-center gap-4 mt-4 w-full max-w-sm">
             <Link
-              href="/signup"
+              href="/pilot-program"
               className="w-full py-4 rounded-full text-center text-white font-medium transition-opacity duration-200 hover:opacity-90"
               style={{
                 backgroundColor: "#3d1a0e",
@@ -669,16 +855,6 @@ export default function HomePage() {
               }}
             >
               Get started
-            </Link>
-            <Link
-              href="/login"
-              className="text-[#5c2a18] underline underline-offset-4 decoration-[#5c2a18]/50 hover:decoration-[#5c2a18] transition-[text-decoration-color] duration-200"
-              style={{
-                fontFamily: "var(--font-instrument-sans)",
-                fontSize: "clamp(14px, 1.1vw, 16px)",
-              }}
-            >
-              Already have an account? Sign In!
             </Link>
           </div>
         </div>
