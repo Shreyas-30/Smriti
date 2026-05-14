@@ -337,10 +337,12 @@ export default function SurveyPage() {
           className="text-[#5c2a18] max-w-xl mx-auto leading-relaxed"
           style={{ ...SANS, fontSize: "clamp(14px, 1.2vw, 16px)" }}
         >
-          I&apos;m working on a project to understand how south asian families
-          document the rich cultural histories of their ancestors and loved ones.
-          This is a very short (3–5 minutes) anonymous survey to gather data on
-          this topic. Thank you for taking the time to fill it out!
+          Smriti helps South Asian families preserve the stories, memories, and
+          lived histories of their elders — guided, personal, and built to last.
+          As we prepare to launch our pilot program, we&apos;re gathering input
+          from people like you to make sure we build something that truly
+          resonates. This survey takes 3–5 minutes and your responses directly
+          shape what we create.
         </p>
       </header>
 
@@ -445,8 +447,7 @@ export default function SurveyPage() {
                   style={{
                     ...SANS,
                     fontSize: "16px",
-                    borderColor:
-                      form.importance === n ? "#3d1a0e" : "#d4c9b8",
+                    borderColor: form.importance === n ? "#3d1a0e" : "#d4c9b8",
                     backgroundColor:
                       form.importance === n ? "#3d1a0e" : "transparent",
                     color: form.importance === n ? "white" : "#5c2a18",
@@ -457,16 +458,10 @@ export default function SurveyPage() {
               ))}
             </div>
             <div className="flex justify-between mt-2 max-w-[15rem]">
-              <span
-                className="text-[#5c2a18]/60 text-xs"
-                style={SANS}
-              >
+              <span className="text-[#5c2a18]/60 text-xs" style={SANS}>
                 Not important
               </span>
-              <span
-                className="text-[#5c2a18]/60 text-xs"
-                style={SANS}
-              >
+              <span className="text-[#5c2a18]/60 text-xs" style={SANS}>
                 Extremely important
               </span>
             </div>

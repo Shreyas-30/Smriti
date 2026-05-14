@@ -595,7 +595,7 @@ export default function HomePage() {
 
           <div className="flex flex-col items-center gap-4 mt-4 w-full max-w-sm">
             <Link
-              href="/pilot-program"
+              href="/signup"
               className="w-full py-4 rounded-full text-center text-white font-medium transition-opacity duration-200 hover:opacity-90"
               style={{
                 backgroundColor: "#3d1a0e",
@@ -846,7 +846,7 @@ export default function HomePage() {
           </h2>
           <div className="flex flex-col items-center gap-4 mt-4 w-full max-w-sm">
             <Link
-              href="/pilot-program"
+              href="/signup"
               className="w-full py-4 rounded-full text-center text-white font-medium transition-opacity duration-200 hover:opacity-90"
               style={{
                 backgroundColor: "#3d1a0e",
